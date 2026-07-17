@@ -71,3 +71,27 @@ body {
 .content p + p { margin-top: 16px; }
 code { background: #1a1e28; border: 1px solid var(--line); padding: 2px 6px; border-radius: 6px; color: var(--code); font-size: 13px; }
 .site-footer { border-top: 1px solid var(--line); padding: 18px 0; color: var(--muted); font-size: 13px; }
+
+/* mood gauge */
+.mood-gauge {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.mood-gauge__svg {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  display: block;
+}
+.mood-gauge__needle {
+  transform-origin: 100px 100px;
+  transition: transform 0.6s ease;
+}
+.mood-gauge__label {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d8dde6;
+}
