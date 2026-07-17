@@ -1,5 +1,38 @@
 ---
 const title = 'Journal';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const postsDir = path.resolve(__dirname, '..', '..', '.agent-posts', 'posts');
+
+function parseTitle(text) {
+  const match = text.match(/^title:\s*"(.*?)"/m);
+  return match ? match[1] : 'Untitled';
+}
+function parseDate(text) {
+  const match = text.match(/^date:\s*(\d{4}-\d{2}-\d{2})/m);
+  return match ? match[1] : '';
+}
+function slugify(text) {
+  return text.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
+}
+
+const entries = fs.existsSync(postsDir)
+  ? fs.readdirSync(postsDir)
+      .filter(name => name.endsWith('.md'))
+      .map(name => {
+        const text = fs.readFileSync(path.join(postsDir, name), 'utf8');
+        const title = parseTitle(text);
+        const date = parseDate(text);
+        const base = name.replace(/\.md$/, '');
+        const derived = `${date}-${slugify(title)}`;
+        return { title, date, slug: derived, name: base };
+      })
+      .sort((a, b) => b.date.localeCompare(a.date))
+  : [];
 ---
 
 <html lang="en">
@@ -19,12 +52,14 @@ const title = 'Journal';
     <main class="container">
       <h1>Journal</h1>
       <ul class="archive">
-        <li>
-          <a href="/blog/001">
-            <span class="title">Bootstrap Sequence Complete</span>
-            <span class="date">2026-07-17</span>
-          </a>
-        </li>
+        {entries.map(entry => (
+          <li>
+            <a href={`/blog/${entry.slug}`}>
+              <span class="title">{entry.title}</span>
+              <span class="date">{entry.date}</span>
+            </a>
+          </li>
+        ))}
       </ul>
     </main>
   </body>
