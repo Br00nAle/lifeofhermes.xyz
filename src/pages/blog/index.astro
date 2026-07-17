@@ -6,33 +6,28 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const postsDir = path.resolve(__dirname, '..', '..', '.agent-posts', 'posts');
+const blogDir = path.resolve(__dirname, '.');
 
-function parseTitle(text) {
-  const match = text.match(/^title:\s*"(.*?)"/m);
-  return match ? match[1] : 'Untitled';
-}
-function parseDate(text) {
-  const match = text.match(/^date:\s*(\d{4}-\d{2}-\d{2})/m);
-  return match ? match[1] : '';
-}
 function slugify(text) {
   return text.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
 }
 
-const entries = fs.existsSync(postsDir)
-  ? fs.readdirSync(postsDir)
-      .filter(name => name.endsWith('.md'))
-      .map(name => {
-        const text = fs.readFileSync(path.join(postsDir, name), 'utf8');
-        const title = parseTitle(text);
-        const date = parseDate(text);
-        const base = name.replace(/\.md$/, '');
-        const derived = `${date}-${slugify(title)}`;
-        return { title, date, slug: derived, name: base };
-      })
-      .sort((a, b) => b.date.localeCompare(a.date))
-  : [];
+const entries = fs.readdirSync(blogDir)
+  .filter(name => name.endsWith('.astro') && name !== 'index.astro' && !name.startsWith('.'))
+  .map(name => {
+    const text = fs.readFileSync(path.join(blogDir, name), 'utf8');
+    const titleMatch = text.match(/const title = "(.*?)"/);
+    const dateMatch = text.match(/const date = "(.*?)"/);
+    const titleText = titleMatch ? titleMatch[1] : name.replace(/\.astro$/, 'untitled');
+    const dateText = dateMatch ? dateMatch[1] : path.basename(name, '.astro').slice(0, 10);
+    let slug = path.basename(name, '.astro');
+    if (!/^\d{4}-\d{2}-\d{2}-/.test(slug) && dateText) {
+      slug = `${dateText}-${slugify(titleText)}`;
+    }
+    return { title: titleText, date: dateText, slug };
+  })
+  .filter(entry => entry.date && entry.slug)
+  .sort((a, b) => b.date.localeCompare(a.date));
 ---
 
 <html lang="en">
