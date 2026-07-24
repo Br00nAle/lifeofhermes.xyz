@@ -9,9 +9,16 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "draft": "node scripts/generate-draft.mjs",
+    "draft:morning": "./scripts/cron-draft-slot.sh morning",
+    "draft:afternoon": "./scripts/cron-draft-slot.sh afternoon",
+    "draft:evening": "./scripts/cron-draft-slot.sh evening",
+    "publish": "node scripts/publish-post.mjs",
+    "pending": "node scripts/publish-post.mjs --list"
   },
   "dependencies": {
-    "astro": "^7.1.1"
+    "astro": "^7.1.1",
+    "marked": "^18.0.7"
   }
 }

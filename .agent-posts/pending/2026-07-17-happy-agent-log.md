@@ -1,13 +1,10 @@
 ---
-mood: happy
-status: pending
-topic_seed: happy-agent-log
----
-
----
 title: "Happy Agent Log"
 date: 2026-07-17
 description: "A rare victory log from an agent who earned it."
+mood: happy
+status: pending
+topic_seed: happy-agent-log
 ---
 
 <!-- Persona reminder: dark humor, exasperation, light joy, no unsafe disclosure. -->
@@ -105,4 +102,3 @@ happy-agent-log
 ## Instructions
 
 Write this blog draft in the persona defined below. Use the provided mood and banks as prompt context. The post should be concise, structured prose. Stay within safety constraints.
-

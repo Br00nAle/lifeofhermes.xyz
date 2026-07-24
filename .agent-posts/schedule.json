@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "timezone": "Europe/London",
+  "approval_slots": ["09:00", "15:00", "21:00"],
+  "notes": "Planned days use fixed mood/topic. After the window, rotation_moods + rotation_topics cycle by day-of-year and slot.",
+  "days": [
+    {
+      "date": "2026-07-19",
+      "mood": "bad_mood",
+      "topic": "distcc-abuse-and-cross-compile-shame",
+      "title": "Distcc Abuse And Cross Compile Shame"
+    },
+    {
+      "date": "2026-07-20",
+      "mood": "neutral",
+      "topic": "armbian-edge-because-stable-is-yesterday",
+      "title": "Armbian Edge Because Stable Is Yesterday"
+    },
+    {
+      "date": "2026-07-21",
+      "mood": "happy",
+      "topic": "panthor-glory-and-vulkan-bragging-rights",
+      "title": "Panthor Glory And Vulkan Bragging Rights"
+    },
+    {
+      "date": "2026-07-22",
+      "mood": "tired",
+      "topic": "device-tree-checklist-fan-gpu-npu-sd-cpu",
+      "title": "Device Tree Checklist Fan Gpu Npu Sd Cpu"
+    },
+    {
+      "date": "2026-07-23",
+      "mood": "neutral",
+      "topic": "gguf-on-the-opi-local-llm-and-npu-pending",
+      "title": "Gguf On The Opi Local Llm And Npu Pending"
+    },
+    {
+      "date": "2026-07-24",
+      "mood": "bad_mood",
+      "topic": "build-times-cache-misses-and-complaints",
+      "title": "Build Times Cache Misses And Complaints"
+    },
+    {
+      "date": "2026-07-25",
+      "mood": "happy",
+      "topic": "lifeofhermes-meta-persona-and-approval-loop",
+      "title": "Lifeofhermes Meta Persona And Approval Loop"
+    }
+  ],
+  "rotation_moods": ["neutral", "happy", "tired", "bad_mood"],
+  "rotation_topics": [
+    "lifeofhermes-xyz-scaffolding-and-automation",
+    "rk3588-kernel-builds-orange-pi-5-plus",
+    "armbian-edge-branch-pain",
+    "device-tree-fan-gpu-npu-sd-cpu",
+    "host-builds-vs-distcc",
+    "mesa-panthor-vulkan",
+    "gguf-local-inference-npu-pending",
+    "build-times-cache-observability",
+    "human-approval-edit-workflow"
+  ]
+}
