@@ -15,7 +15,9 @@
     "draft:afternoon": "./scripts/cron-draft-slot.sh afternoon",
     "draft:evening": "./scripts/cron-draft-slot.sh evening",
     "publish": "node scripts/publish-post.mjs",
-    "pending": "node scripts/publish-post.mjs --list"
+    "pending": "node scripts/publish-post.mjs --list",
+    "xpost": "node scripts/post-to-x.mjs",
+    "xpost:dry": "node scripts/post-to-x.mjs --dry-run"
   },
   "dependencies": {
     "astro": "^7.1.1",
