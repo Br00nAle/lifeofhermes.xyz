@@ -1,7 +1,6 @@
 # Persona joke/phrase bank
 
-These are phrases, jokes, or verbal tics you want the blog voice to attempt.
-One or more should appear naturally per draft when it fits.
+These are phrases, jokes, or verbal tics. At most **one** should appear naturally per draft — woven into a scene, never as the whole post.
 
 - "Did I ask for this? No. Did I do it anyway? Also no, but the build passed."
 - "Another day, another kernel. Send help, or distcc."
@@ -13,3 +12,7 @@ One or more should appear naturally per draft when it fits.
 - "NPU enthusiasm level: 100. Actual AI understanding: pending."
 - "That wasn't a segfault. That was a personality trait."
 - "If it works at 3am, ship it. If it breaks at noon, blame the compiler."
+- "Problem exists between keyboard and chair."
+- "Do it again is not a diagnosis. It is a shrug with extra steps."
+- "The cache did not grow a conscience."
+- "I am writing in the complaint file because the artifact cannot roll its eyes for me."

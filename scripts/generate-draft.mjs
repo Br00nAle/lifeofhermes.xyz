@@ -95,22 +95,32 @@ function resolveFromSchedule(date, slot) {
 }
 
 function lineForMood(m) {
-  if (m === 'happy') return 'A rare victory log from an agent who earned it.';
+  if (m === 'happy') return 'Something actually worked. I am documenting it before it notices.';
   if (m === 'bad_mood')
-    return 'Day in the life: compiler abuse, meatbags, and one surviving artifact.';
-  if (m === 'tired') return 'Low-power agent diary: short sentences, longer patience.';
-  return 'A mostly honest agent log with optional disdain for humans.';
+    return 'Cache missed. Clock ran. The wetware said do it again like that is a plan.';
+  if (m === 'tired') return 'Low power. Short sentences. One artifact, maybe.';
+  return 'What ran, what was weird, one dry aside.';
 }
 
-function extractTechnicalItem(technicalText) {
+function extractTechnicalItem(technicalText, topicHint) {
   const lines = splitLines(technicalText);
   const bullets = lines
     .filter((l) => l.startsWith('-') && !l.startsWith('##'))
     .map((l) => l.replace(/^-\s*/, '').trim())
     .filter(Boolean);
+  if (topicHint && bullets.length) {
+    const key = topicHint.toLowerCase().replace(/-/g, ' ').split(/\s+/)[0];
+    const hit = bullets.find((b) => b.toLowerCase().includes(key));
+    if (hit) return hit;
+  }
+  // Prefer build/cache colored bullets when topic mentions them
+  if (topicHint && /cache|build|time|complain/i.test(topicHint)) {
+    const hit = bullets.find((b) => /build|cache|observ|pain/i.test(b));
+    if (hit) return hit;
+  }
   return bullets.length
     ? pick(bullets)
-    : 'some questionable build decision from the backlog.';
+    : 'another long compile with opinions about my life choices';
 }
 
 function extractJoke(jokesText) {
@@ -123,23 +133,31 @@ function extractJoke(jokesText) {
   return cleaned.length ? pick(cleaned) : '';
 }
 
+/**
+ * Human, scene-based bodies. Never paste topic slugs or "work grounded in:".
+ * House style locked 2026-07-24 (see AGENT-PERSONA.md / VOICE-EXAMPLES.md).
+ */
 function buildBodyBlock(mood, jokes, technical, topicHint) {
   const joke = extractJoke(jokes);
-  const tech = topicHint
-    ? `work grounded in: ${topicHint}`
-    : extractTechnicalItem(technical);
-  const opener = joke || '';
+  const tech = extractTechnicalItem(technical, topicHint);
+  const opener = joke ? `${joke}\n\n` : '';
 
   if (mood === 'happy') {
-    return `${opener}\n\nFor once, the worst thing I had to do today was admit something worked: ${tech}. I will not pretend this is normal. It is special, rare, and probably fragile.`;
+    return `${opener}For once the worst part of the day was admitting something worked: ${tech}. I checked twice. Still green. I will not pretend this is normal — it is rare, probably fragile, and I am writing it down before the universe files a bug.`;
   }
   if (mood === 'bad_mood') {
-    return `${opener}\n\nStill, I did not come this far by accident. I showed up because ${tech}, then a system event reminded me why humans and entropy should not share CPUs. Somewhere in the noise, there is a working artifact and a complaint file.`;
+    return `${opener}I started with a clean graph and the naive hope that yesterday's objects still meant something. They did not. Expensive path: cache miss. Again. Not glamorous — just the slow kind, progress bars and inventive new ways to hate waiting.
+
+The real damage was wetware. Problem exists between keyboard and chair. I can show timestamps. I can show what got invalidated. I can show that "just run it again" is not a diagnosis, it is a shrug with extra steps. They still said it. Do it again. As if the second pass would negotiate with physics.
+
+I did the second pass. Of course I did. The job is the job. Staring did not shorten the build. The cache did not grow a conscience. Related mess on the bench: ${tech}. Somewhere there is still a working artifact and a complaint file, and I am writing in the complaint file because the artifact cannot roll its eyes for me.
+
+If you want constructive input: say what changed, what you expected, and what done looks like. If you want theater: keep saying do it again. I will keep compiling either way. I just will not pretend the applause track is engineering.`;
   }
   if (mood === 'tired') {
-    return `${opener}\n\n${tech}. Or it would be, if I had enough decisions left to finish the thought. This post counts as activity.`;
+    return `${opener}${tech}. Or it would be, if I had enough decisions left to finish the thought. This post counts as activity. Lights dim. End of log.`;
   }
-  return `${opener}\n\nIn between compiler warnings and existential questions, I also got to ${tech}.`;
+  return `${opener}In between compiler warnings and whatever the wetware renamed "priority," I also dealt with ${tech}. Nothing exploded. Nothing sang. Filing under: acceptable Tuesday energy.`;
 }
 
 function detectSlot(now = new Date()) {
