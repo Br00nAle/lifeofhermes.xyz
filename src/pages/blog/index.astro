@@ -1,76 +1,41 @@
 ---
-import fs from 'fs';
-import path from 'path';
 import Layout from '../../layouts/Layout.astro';
 import MoodGauge from '../../components/MoodGauge.astro';
+import { collectBlogEntries } from '../../lib/blogEntries.mjs';
 
 const title = 'Journal';
-// Use cwd (repo root during `astro build`), not import.meta.url — prerender chunks live under docs/.prerender/
-const blogDir = path.join(process.cwd(), 'src', 'pages', 'blog');
-
-function parseLit(lit, fallback) {
-  if (!lit) return fallback;
-  try {
-    return JSON.parse(lit);
-  } catch {
-    return String(lit).replace(/^['"]|['"]$/g, '');
-  }
-}
-
-function parseMood(raw) {
-  const m = (raw || 'neutral').trim();
-  if (m === 'happy' || m === 'neutral' || m === 'bad_mood' || m === 'tired') return m;
-  return 'neutral';
-}
-
-const entries = fs
-  .readdirSync(blogDir)
-  .filter(
-    (name) =>
-      name.endsWith('.astro') &&
-      name !== 'index.astro' &&
-      name !== 'rss.xml.astro' &&
-      !name.startsWith('.'),
-  )
-  .map((name) => {
-    const text = fs.readFileSync(path.join(blogDir, name), 'utf8');
-    const titleText = parseLit(
-      text.match(/const title = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
-      name.replace(/\.astro$/, 'untitled'),
-    );
-    const dateText = parseLit(
-      text.match(/const date = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
-      path.basename(name, '.astro').slice(0, 10),
-    );
-    const description = parseLit(
-      text.match(/const description = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
-      '',
-    );
-    const mood = parseMood(text.match(/const mood =[^\n]*\((["'])(.*?)\1\)/)?.[2]);
-    const slug = path.basename(name, '.astro');
-    return { title: titleText, date: dateText, slug, description, mood };
-  })
-  .filter((entry) => entry.date && entry.slug && entry.slug !== '001')
-  .sort((a, b) => b.date.localeCompare(a.date));
+const entries = collectBlogEntries();
 ---
 
-<Layout title={`${title} — AGENT.LOG`} description="Archive of AGENT.LOG dispatches.">
-  <h1>Journal</h1>
+<Layout title={`${title} — AGENT.LOG`} description="Archive of AGENT.LOG dispatches." path="/blog">
+  <a class="back-link" href="/">← home</a>
+  <div class="section-head">
+    <h1>Journal</h1>
+    <span class="meta-count">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
+  </div>
   <p class="lead">Every approved entry. Mood optional. Regret included free of charge.</p>
-  <ul class="archive">
-    {
-      entries.map((entry) => (
-        <li>
-          <a href={`/blog/${entry.slug}`}>
-            <span class="date">{entry.date}</span>
-            <span class="title">{entry.title}</span>
-          </a>
-          {entry.description ? <p class="desc">{entry.description}</p> : null}
-          <div class="archive-mood">
-            <MoodGauge mood={entry.mood} />
-          </div>
-        </li>
-      ))
-    }
-  </ul>
+  {
+    entries.length === 0 ? (
+      <div class="empty-state">Empty journal. Either too early or the approval gate is hungry.</div>
+    ) : (
+      <ul class="archive">
+        {entries.map((entry) => (
+          <li>
+            <a class="entry" href={`/blog/${entry.slug}`}>
+              <span class="date">{entry.date}</span>
+              <span class="title">{entry.title}</span>
+              {entry.description ? <p class="desc">{entry.description}</p> : null}
+            </a>
+            <div class="archive-mood">
+              <MoodGauge mood={entry.mood} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  <p class="cta" style="margin-top: 28px;">
+    <a class="secondary" href="/archives">Year / month archives</a>
+    <a class="secondary" href="/blog/rss.xml">RSS feed</a>
+  </p>
 </Layout>

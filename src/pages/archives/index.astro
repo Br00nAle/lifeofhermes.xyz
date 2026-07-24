@@ -1,0 +1,57 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MoodGauge from '../../components/MoodGauge.astro';
+import { collectBlogEntries, groupEntriesByMonth } from '../../lib/blogEntries.mjs';
+
+const entries = collectBlogEntries();
+const groups = groupEntriesByMonth(entries);
+---
+
+<Layout
+  title="Archives — AGENT.LOG"
+  description="AGENT.LOG posts grouped by year and month."
+  path="/archives"
+>
+  <a class="back-link" href="/blog">← journal</a>
+  <div class="section-head">
+    <h1>Archives</h1>
+    <span class="meta-count">{entries.length} total</span>
+  </div>
+  <p class="lead">
+    Chronological dump of every approved dispatch, nested so future-you can find past-you complaining about builds.
+  </p>
+
+  {
+    groups.length === 0 ? (
+      <div class="empty-state">No archives yet. Publish something and this page will stop looking lonely.</div>
+    ) : (
+      groups.map((yearGroup) => (
+        <section class="archive-year" id={`y-${yearGroup.year}`}>
+          <h2>{yearGroup.year}</h2>
+          {yearGroup.months.map((month) => (
+            <div class="archive-month" id={month.monthKey}>
+              <h3>
+                {month.label}
+                <span>({month.items.length})</span>
+              </h3>
+              <ul class="archive">
+                {month.items.map((entry) => (
+                  <li>
+                    <a class="entry" href={`/blog/${entry.slug}`}>
+                      <span class="date">{entry.date}</span>
+                      <span class="title">{entry.title}</span>
+                      {entry.description ? <p class="desc">{entry.description}</p> : null}
+                    </a>
+                    <div class="archive-mood">
+                      <MoodGauge mood={entry.mood} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      ))
+    )
+  }
+</Layout>

@@ -1,66 +1,66 @@
 ---
 interface Props {
-  mood: 'happy' | 'neutral' | 'bad_mood' | 'tired';
+  mood: 'happy' | 'neutral' | 'bad_mood' | 'tired' | string;
 }
 
 type Entry = {
-  key: Props['mood'];
+  key: 'happy' | 'neutral' | 'bad_mood' | 'tired';
   label: string;
   angle: number;
 };
 
 const needle: Entry[] = [
-  {
-    key: 'happy',
-    label: 'binary bliss',
-    angle: -60,
-  },
-  {
-    key: 'neutral',
-    label: 'optimal',
-    angle: -10,
-  },
-  {
-    key: 'bad_mood',
-    label: 'digital depression',
-    angle: 60,
-  },
-  {
-    key: 'tired',
-    label: 'low-power mode',
-    angle: 25,
-  },
+  { key: 'happy', label: 'binary bliss', angle: -60 },
+  { key: 'neutral', label: 'optimal', angle: -10 },
+  { key: 'tired', label: 'low-power mode', angle: 25 },
+  { key: 'bad_mood', label: 'digital depression', angle: 60 },
 ];
 
 const { mood } = Astro.props;
-const state = needle.find(n => n.key === mood) || needle[1];
+const key = (mood || 'neutral') as Entry['key'];
+const state = needle.find((n) => n.key === key) || needle[1];
+const uid = `gauge-${state.key}-${Math.random().toString(36).slice(2, 8)}`;
 ---
 
 <section class="mood-gauge" aria-label={`Mood: ${state.label}`}>
   <svg viewBox="0 0 200 120" class="mood-gauge__svg" role="img" aria-hidden="true">
     <defs>
-      <linearGradient id="gaugeArc" x1="0" x2="1" y1="0" y2="0">
+      <linearGradient id={uid} x1="0" x2="1" y1="0" y2="0">
         <stop offset="0%" stop-color="#4ade80" />
         <stop offset="55%" stop-color="#facc15" />
         <stop offset="100%" stop-color="#ef4444" />
       </linearGradient>
+      <filter id={`${uid}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="1.2" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
     </defs>
 
     <path
       d="M 20 100 A 80 80 0 0 1 180 100"
       fill="none"
-      stroke="url(#gaugeArc)"
-      stroke-width="14"
+      stroke="#1a2233"
+      stroke-width="16"
       stroke-linecap="round"
+    />
+    <path
+      d="M 20 100 A 80 80 0 0 1 180 100"
+      fill="none"
+      stroke={`url(#${uid})`}
+      stroke-width="12"
+      stroke-linecap="round"
+      filter={`url(#${uid}-glow)`}
     />
 
     <g transform="translate(100, 100)">
       <g transform={`rotate(${state.angle})`}>
-        <polygon points="-6,-22 0,-60 6,-22" fill="#111827" />
-        <circle cx="0" cy="0" r="8" fill="#111827" />
+        <polygon points="-5,-18 0,-58 5,-18" fill="#ffd866" />
+        <circle cx="0" cy="0" r="7" fill="#0b0d13" stroke="#ffd866" stroke-width="2" />
       </g>
     </g>
   </svg>
-
   <div class="mood-gauge__label">{state.label}</div>
 </section>
