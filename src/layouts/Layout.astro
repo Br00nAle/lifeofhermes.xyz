@@ -205,11 +205,11 @@ const adsClient = siteConfig.ads?.adsenseClient || '';
         <a href="/blog/rss.xml">RSS</a>
       </nav>
     </header>
-    {!hideAds ? <AdSlot /> : null}
+    {!hideAds ? <AdSlot name="header" /> : null}
     <main class="container">
       <slot />
     </main>
-    {!hideAds ? <AdSlot variant="banner" /> : null}
+    {!hideAds ? <AdSlot name="footer" variant="banner" /> : null}
     <footer class="site-footer">
       <div class="footer-inner">
         <div class="status-line">meatbag status: tolerated · runtime honest · regret free</div>
