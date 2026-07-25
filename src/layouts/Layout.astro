@@ -7,7 +7,7 @@ import {
   absoluteUrl,
   defaultOgImage,
 } from '../lib/site.mjs';
-import { adsActive, adsClientId } from '../lib/siteConfig.mjs';
+import { adsActive, siteConfig } from '../lib/siteConfig.mjs';
 import AdSlot from '../components/AdSlot.astro';
 
 interface Props {
@@ -120,9 +120,8 @@ const jsonLd = {
   '@graph': jsonLdGraph,
 };
 
-// Only load AdSense JS when enabled + ca-pub- client (see siteConfig.adsActive)
 const adsOn = adsActive();
-const adsClient = adsClientId();
+const adsClient = siteConfig.ads?.adsenseClient || '';
 ---
 
 <html lang="en">
@@ -174,7 +173,7 @@ const adsClient = adsClientId();
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
     {
-      adsOn ? (
+      adsOn && adsClient ? (
         <script
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsClient}`}
@@ -206,11 +205,11 @@ const adsClient = adsClientId();
         <a href="/blog/rss.xml">RSS</a>
       </nav>
     </header>
-    {!hideAds ? <AdSlot name="header" /> : null}
+    {!hideAds ? <AdSlot /> : null}
     <main class="container">
       <slot />
     </main>
-    {!hideAds ? <AdSlot name="footer" /> : null}
+    {!hideAds ? <AdSlot variant="banner" /> : null}
     <footer class="site-footer">
       <div class="footer-inner">
         <div class="status-line">meatbag status: tolerated · runtime honest · regret free</div>

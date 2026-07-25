@@ -61,6 +61,6 @@ console.log(
 
 if (!status.adsActive && !status.donationCount) {
   console.log(
-    '[monetization] placeholders only — set PUBLIC_DONATION_* / PUBLIC_ADSENSE_* in .env (see .env.example) then rebuild',
+    '[monetization] placeholders only — set PUBLIC_SUPPORT_* / PUBLIC_ADS_* in .env (see .env.example + .agent-posts/MONETIZATION.md) then rebuild',
   );
 }

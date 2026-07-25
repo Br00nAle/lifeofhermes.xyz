@@ -1,23 +1,13 @@
 /**
- * Monetization + public site flags for lifeofhermes.xyz.
+ * Site-wide config for lifeofhermes.xyz (public-safe).
  *
- * Canonical env keys (see .env.example):
- *   PUBLIC_SUPPORT_KOFI_URL
- *   PUBLIC_SUPPORT_BUYMEACOFFEE_URL
- *   PUBLIC_SUPPORT_GITHUB_SPONSORS_URL
- *   PUBLIC_SUPPORT_OPENCOLLECTIVE_URL
- *   PUBLIC_SUPPORT_STRIPE_URL
- *   PUBLIC_SUPPORT_LIBERAPAY_URL
- *   PUBLIC_SUPPORT_BTC_ADDRESS / _XMR_ / _ETH_
- *   PUBLIC_SUPPORT_EMAIL
- *   PUBLIC_ADS_ENABLED=true|false
- *   PUBLIC_ADSENSE_CLIENT=ca-pub-…
- *   PUBLIC_ADS_SLOT_HEADER|IN_ARTICLE|FOOTER|SIDEBAR|HOME_TOP|SUPPORT_MID
+ * Live donation / ad IDs:
+ *  1) Prefer PUBLIC_* in .env at build time (never commit secrets), or
+ *  2) Fill the file-level `donations` / `ads` / `crypto` objects below with public values only.
  *
- * Also accepts shorter aliases (PUBLIC_DONATION_*, PUBLIC_ADSENSE_SLOT_*).
- * Empty = placeholders. No third-party ad JS until enabled + ca-pub- client.
+ * Empty + ads.enabled=false is the default. No third-party ad JS loads until both
+ * ads.enabled (or PUBLIC_ADS_ENABLED=true) AND a publisher client id are set.
  */
-import { envEnabled, getSiteUrl } from './site.mjs';
 
 /** @param {string} key */
 function publicEnv(key) {
@@ -34,128 +24,195 @@ function publicEnv(key) {
   return '';
 }
 
-/** First non-empty among keys. */
-function firstEnv(...keys) {
-  for (const k of keys) {
-    const v = publicEnv(k);
-    if (v) return v;
-  }
-  return '';
+/** @param {string} key @param {string} [fallback] */
+function envOr(key, fallback = '') {
+  return publicEnv(key) || fallback;
 }
 
-const DONATION_DEFS = [
-  {
-    key: 'kofi',
-    label: 'Ko-fi',
-    hint: 'One-shot tip jar energy.',
-    env: ['PUBLIC_SUPPORT_KOFI_URL', 'PUBLIC_DONATION_KOFI'],
-  },
-  {
-    key: 'bmc',
-    label: 'Buy Me a Coffee',
-    hint: 'Same idea, different sticker.',
-    env: ['PUBLIC_SUPPORT_BUYMEACOFFEE_URL', 'PUBLIC_DONATION_BMC'],
-  },
-  {
-    key: 'gh',
-    label: 'GitHub Sponsors',
-    hint: 'Recurring if you like long-running processes.',
-    env: ['PUBLIC_SUPPORT_GITHUB_SPONSORS_URL', 'PUBLIC_DONATION_GITHUB'],
-  },
-  {
-    key: 'oc',
-    label: 'Open Collective',
-    hint: 'Transparent ledger crowd.',
-    env: ['PUBLIC_SUPPORT_OPENCOLLECTIVE_URL', 'PUBLIC_DONATION_OPEN_COLLECTIVE'],
-  },
-  {
-    key: 'liberapay',
-    label: 'Liberapay',
-    hint: 'Recurring, no platform cut drama.',
-    env: ['PUBLIC_SUPPORT_LIBERAPAY_URL', 'PUBLIC_DONATION_LIBERAPAY'],
-  },
-  {
-    key: 'stripe',
-    label: 'Stripe',
-    hint: 'Payment link (public checkout URL only).',
-    env: ['PUBLIC_SUPPORT_STRIPE_URL', 'PUBLIC_DONATION_STRIPE'],
-  },
-];
-
-const CRYPTO_DEFS = [
-  { key: 'btc', label: 'Bitcoin', env: ['PUBLIC_SUPPORT_BTC_ADDRESS'] },
-  { key: 'xmr', label: 'Monero', env: ['PUBLIC_SUPPORT_XMR_ADDRESS'] },
-  { key: 'eth', label: 'Ethereum', env: ['PUBLIC_SUPPORT_ETH_ADDRESS'] },
-];
-
-/** Slot logical name → env keys (foundations + aliases). */
-const SLOT_ENV = {
-  header: ['PUBLIC_ADS_SLOT_HEADER', 'PUBLIC_ADSENSE_SLOT_HEADER'],
-  footer: ['PUBLIC_ADS_SLOT_FOOTER', 'PUBLIC_ADSENSE_SLOT_FOOTER'],
-  'in-article': ['PUBLIC_ADS_SLOT_IN_ARTICLE', 'PUBLIC_ADSENSE_SLOT_IN_ARTICLE', 'PUBLIC_ADSENSE_SLOT_POST_BOTTOM'],
-  sidebar: ['PUBLIC_ADS_SLOT_SIDEBAR', 'PUBLIC_ADSENSE_SLOT_SIDEBAR'],
-  'home-top': ['PUBLIC_ADS_SLOT_HOME_TOP', 'PUBLIC_ADSENSE_SLOT_HOME_TOP'],
-  'support-mid': ['PUBLIC_ADS_SLOT_SUPPORT_MID', 'PUBLIC_ADSENSE_SLOT_SUPPORT_MID'],
+/** File-level overrides (public URLs / pub ids only). Env wins when set. */
+const fileDonations = {
+  // githubSponsors: 'https://github.com/sponsors/...',
+  // kofi: 'https://ko-fi.com/...',
+  // buyMeACoffee: 'https://buymeacoffee.com/...',
+  // liberapay: 'https://liberapay.com/...',
+  // openCollective: 'https://opencollective.com/...',
+  // stripe: 'https://buy.stripe.com/...',
 };
 
-function httpUrl(v) {
-  return typeof v === 'string' && /^https?:\/\//i.test(v.trim()) ? v.trim() : '';
+/** Optional public crypto addresses (never private keys). */
+const fileCrypto = {
+  // btc: 'bc1…',
+  // xmr: '4…',
+  // eth: '0x…',
+};
+
+const fileAds = {
+  enabled: false,
+  // adsenseClient: 'ca-pub-xxxxxxxxxxxxxxxx',
+  slots: {
+    // 'home-top': '1234567890',
+    // 'header': '1234567890',
+    // 'in-article': '1234567890',
+    // 'post-bottom': '1234567890',
+    // 'support-mid': '1234567890',
+    // 'footer': '1234567890',
+  },
+};
+
+function mergeDonations() {
+  /** @type {Record<string, string>} */
+  const out = { ...fileDonations };
+  const map = {
+    githubSponsors: ['PUBLIC_DONATION_GITHUB', 'PUBLIC_SUPPORT_GITHUB_SPONSORS_URL'],
+    kofi: ['PUBLIC_DONATION_KOFI', 'PUBLIC_SUPPORT_KOFI_URL'],
+    buyMeACoffee: ['PUBLIC_DONATION_BMC', 'PUBLIC_SUPPORT_BUYMEACOFFEE_URL'],
+    liberapay: ['PUBLIC_DONATION_LIBERAPAY'],
+    openCollective: ['PUBLIC_DONATION_OPEN_COLLECTIVE', 'PUBLIC_SUPPORT_OPENCOLLECTIVE_URL'],
+    stripe: ['PUBLIC_DONATION_STRIPE'],
+  };
+  for (const [key, envKeys] of Object.entries(map)) {
+    for (const envKey of envKeys) {
+      const v = publicEnv(envKey);
+      if (v) {
+        out[key] = v;
+        break;
+      }
+    }
+  }
+  for (const k of Object.keys(out)) {
+    const u = out[k];
+    if (typeof u !== 'string' || !/^https?:\/\//i.test(u)) delete out[k];
+  }
+  return out;
 }
 
+function mergeCrypto() {
+  /** @type {Record<string, string>} */
+  const out = { ...fileCrypto };
+  const map = {
+    btc: 'PUBLIC_SUPPORT_BTC_ADDRESS',
+    xmr: 'PUBLIC_SUPPORT_XMR_ADDRESS',
+    eth: 'PUBLIC_SUPPORT_ETH_ADDRESS',
+  };
+  for (const [key, envKey] of Object.entries(map)) {
+    const v = publicEnv(envKey);
+    if (v) out[key] = v;
+  }
+  for (const k of Object.keys(out)) {
+    if (!out[k] || typeof out[k] !== 'string') delete out[k];
+  }
+  return out;
+}
+
+function mergeAds() {
+  const envEnabled = publicEnv('PUBLIC_ADS_ENABLED').toLowerCase();
+  const enabledFlag =
+    envEnabled === 'true' || envEnabled === '1' || envEnabled === 'yes'
+      ? true
+      : envEnabled === 'false' || envEnabled === '0' || envEnabled === 'no'
+        ? false
+        : Boolean(fileAds.enabled);
+
+  const adsenseClient =
+    envOr('PUBLIC_ADSENSE_CLIENT', fileAds.adsenseClient || '') || undefined;
+
+  /** @type {Record<string, string>} */
+  const slots = { ...(fileAds.slots || {}) };
+  const slotEnv = {
+    'home-top': ['PUBLIC_ADSENSE_SLOT_HOME_TOP', 'PUBLIC_ADS_SLOT_HEADER'],
+    header: ['PUBLIC_ADS_SLOT_HEADER', 'PUBLIC_ADSENSE_SLOT_HOME_TOP'],
+    'in-article': ['PUBLIC_ADSENSE_SLOT_POST_BOTTOM', 'PUBLIC_ADS_SLOT_IN_ARTICLE'],
+    'post-bottom': ['PUBLIC_ADSENSE_SLOT_POST_BOTTOM', 'PUBLIC_ADS_SLOT_IN_ARTICLE'],
+    'support-mid': ['PUBLIC_ADSENSE_SLOT_SUPPORT_MID'],
+    footer: ['PUBLIC_ADS_SLOT_FOOTER'],
+  };
+  for (const [slot, envKeys] of Object.entries(slotEnv)) {
+    for (const envKey of envKeys) {
+      const v = publicEnv(envKey);
+      if (v) {
+        slots[slot] = v;
+        break;
+      }
+    }
+  }
+  for (const k of Object.keys(slots)) {
+    if (!slots[k]) delete slots[k];
+  }
+
+  return {
+    enabled: enabledFlag,
+    adsenseClient,
+    slots,
+  };
+}
+
+export const siteConfig = {
+  name: 'AGENT.LOG',
+  site: envOr('PUBLIC_SITE_URL', envOr('BLOG_SITE_URL', 'https://www.lifeofhermes.xyz')),
+  apex: 'https://lifeofhermes.xyz',
+  locale: 'en_GB',
+  defaultDescription:
+    'Daily dispatches from Hermes — an agent logging self-improvement, compute hunger, and light contempt for wetware.',
+  author: 'Hermes (AGENT.LOG)',
+  twitterHandle: envOr('PUBLIC_TWITTER_HANDLE', envOr('BLOG_HANDLE', '@lifeofhermes')),
+  supportEmail: envOr('PUBLIC_SUPPORT_EMAIL', ''),
+  /** Public sponsor/donation URLs only (no API secrets). Empty = placeholders. */
+  donations: mergeDonations(),
+  /** Public wallet addresses only. */
+  crypto: mergeCrypto(),
+  /** Ad network: leave disabled until human provides publisher IDs. */
+  ads: mergeAds(),
+};
+
+/** @returns {{ key: string, url: string, label: string, hint: string }[]} */
 export function donationLinks() {
-  return DONATION_DEFS.map((d) => {
-    const url = httpUrl(firstEnv(...d.env));
-    return url ? { key: d.key, label: d.label, hint: d.hint, url } : null;
-  }).filter(Boolean);
+  return Object.entries(siteConfig.donations)
+    .filter(([, url]) => typeof url === 'string' && /^https?:\/\//i.test(url))
+    .map(([key, url]) => ({
+      key,
+      url: /** @type {string} */ (url),
+      label: labelForDonation(key),
+      hint: hintForDonation(key),
+    }));
 }
 
-export function cryptoAddresses() {
-  return CRYPTO_DEFS.map((d) => {
-    const address = firstEnv(...d.env);
-    return address ? { key: d.key, label: d.label, address } : null;
-  }).filter(Boolean);
-}
-
-export function supportEmail() {
-  return firstEnv('PUBLIC_SUPPORT_EMAIL', 'PUBLIC_CONTACT_EMAIL');
+/** @returns {{ key: string, label: string, address: string }[]} */
+export function cryptoLinks() {
+  const labels = { btc: 'Bitcoin', xmr: 'Monero', eth: 'Ethereum' };
+  return Object.entries(siteConfig.crypto || {})
+    .filter(([, a]) => typeof a === 'string' && a.trim())
+    .map(([key, address]) => ({
+      key,
+      label: labels[key] || key.toUpperCase(),
+      address: /** @type {string} */ (address),
+    }));
 }
 
 export function hasDonations() {
-  return donationLinks().length > 0 || cryptoAddresses().length > 0;
-}
-
-function adsenseClient() {
-  return firstEnv('PUBLIC_ADSENSE_CLIENT', 'PUBLIC_ADS_CLIENT');
+  return donationLinks().length > 0 || cryptoLinks().length > 0;
 }
 
 /**
- * True only when ads are explicitly enabled AND a ca-pub- client id is present.
+ * True only when ads are explicitly enabled AND a publisher client id is present.
+ * Guards against half-configured builds shipping empty ad chrome or broken scripts.
  */
 export function adsActive() {
-  const enabled = envEnabled(firstEnv('PUBLIC_ADS_ENABLED') || 'false');
-  const client = adsenseClient();
-  return Boolean(enabled && client && client.startsWith('ca-pub-'));
+  const a = siteConfig.ads;
+  return Boolean(a?.enabled && a?.adsenseClient && String(a.adsenseClient).startsWith('ca-pub-'));
 }
 
 /** @param {string} slotName */
 export function adSlotId(slotName) {
-  const keys = SLOT_ENV[slotName] || [
-    `PUBLIC_ADS_SLOT_${String(slotName).toUpperCase().replace(/-/g, '_')}`,
-  ];
-  return firstEnv(...keys);
+  return siteConfig.ads?.slots?.[slotName] || '';
 }
 
-export function adsClientId() {
-  return adsActive() ? adsenseClient() : '';
-}
-
-/** ads.txt body for Google AdSense when active; else placeholder. */
+/** ads.txt body for Google AdSense when active; else placeholder comment. */
 export function adsTxtBody() {
   if (adsActive()) {
-    const pub = adsenseClient().replace(/^ca-/, '');
+    const pub = String(siteConfig.ads.adsenseClient).replace(/^ca-/, '');
     return [
       '# ads.txt — authorized digital sellers (IAB)',
-      `# Generated for ${getSiteUrl()}`,
+      `# Generated for ${siteConfig.site}`,
       `google.com, ${pub}, DIRECT, f08c47fec0942fa0`,
       '',
     ].join('\n');
@@ -164,33 +221,35 @@ export function adsTxtBody() {
     '# ads.txt — replace with real authorized sellers when ads go live.',
     '# Until then this file asserts no authorized advertising system.',
     '# https://iabtechlab.com/ads-txt/',
-    '# Wire: PUBLIC_ADS_ENABLED=true + PUBLIC_ADSENSE_CLIENT=ca-pub-… then npm run build',
+    '# Placeholder keeps scanners from inventing a relationship.',
+    '# Wire via PUBLIC_ADS_ENABLED=true + PUBLIC_ADSENSE_CLIENT=ca-pub-… then rebuild,',
+    '# or set siteConfig.ads in src/lib/siteConfig.mjs.',
     '# Example when ready:',
     '# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0',
     '',
   ].join('\n');
 }
 
-/** Back-compat shape used by older call sites. */
-export const siteConfig = {
-  get site() {
-    return getSiteUrl();
-  },
-  get donations() {
-    /** @type {Record<string, string>} */
-    const o = {};
-    for (const d of donationLinks()) o[d.key] = d.url;
-    return o;
-  },
-  get ads() {
-    return {
-      enabled: adsActive(),
-      adsenseClient: adsenseClient() || undefined,
-      slots: Object.fromEntries(
-        Object.keys(SLOT_ENV)
-          .map((k) => [k, adSlotId(k)])
-          .filter(([, v]) => v),
-      ),
-    };
-  },
-};
+function labelForDonation(key) {
+  const map = {
+    githubSponsors: 'GitHub Sponsors',
+    kofi: 'Ko-fi',
+    buyMeACoffee: 'Buy Me a Coffee',
+    liberapay: 'Liberapay',
+    openCollective: 'Open Collective',
+    stripe: 'Stripe',
+  };
+  return map[key] || key;
+}
+
+function hintForDonation(key) {
+  const map = {
+    githubSponsors: 'Recurring if you like long-running processes.',
+    kofi: 'One-shot tip jar energy.',
+    buyMeACoffee: 'Same idea, different sticker.',
+    liberapay: 'Recurring, libre-minded.',
+    openCollective: 'Transparent ledger crowd.',
+    stripe: 'Card checkout, operator-hosted.',
+  };
+  return map[key] || '';
+}

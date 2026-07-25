@@ -284,7 +284,7 @@ const slug = ${slugLit};
       </div>
       <MoodGauge mood={mood} />
     </header>
-    <AdSlot name="in-article" />
+    <AdSlot name="post-bottom" />
     <section class="content" set:html={bodyHtml} />
   </article>
 </Layout>

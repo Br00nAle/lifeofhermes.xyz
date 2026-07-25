@@ -1,35 +1,31 @@
 ---
 /**
- * Reserved ad placement.
- * Prop `name` (preferred) or `slot` — maps to PUBLIC_ADS_SLOT_* / aliases.
- * Renders nothing visible until adsActive() and a unit id are set.
+ * Reserved ad placement. Renders nothing interactive until adsActive().
+ * When live: labeled container + AdSense ins unit if slot id is configured.
+ * Prop is `name` (not `slot`) — Astro reserves `slot` for named slots.
  */
-import { adsActive, adSlotId, adsClientId } from '../lib/siteConfig.mjs';
+import { adsActive, adSlotId, siteConfig } from '../lib/siteConfig.mjs';
 
 interface Props {
-  /** Logical slot: header | footer | in-article | sidebar | home-top | support-mid */
+  /** Logical placement → siteConfig.ads.slots / PUBLIC_ADSENSE_SLOT_* */
   name?: string;
-  /** Alias of name (older call sites) */
-  slot?: string;
+  /** Extra class (e.g. ad-slot--banner) */
   variant?: 'default' | 'banner';
   class?: string;
 }
 
 const {
-  name,
-  slot: slotProp,
+  name = 'default',
   variant = 'default',
   class: className = '',
 } = Astro.props;
 
-const slotName = (name || slotProp || 'default').trim();
 const live = adsActive();
-const client = adsClientId();
-const unit = adSlotId(slotName);
+const client = siteConfig.ads?.adsenseClient || '';
+const unit = adSlotId(name);
 const showUnit = live && Boolean(client && unit);
 const classes = [
   'ad-slot',
-  `ad-slot--${slotName}`,
   variant === 'banner' ? 'ad-slot--banner' : '',
   showUnit ? 'ad-slot--live' : 'ad-slot--idle',
   className,
@@ -40,31 +36,31 @@ const classes = [
 
 {
   showUnit ? (
-    <aside class={classes} data-ad-slot={slotName} aria-label="Advertisement">
-      <span class="ad-slot__label">Ad</span>
-      <div class="ad-slot__frame">
-        <ins
-          class="adsbygoogle"
-          style="display:block"
-          data-ad-client={client}
-          data-ad-slot={unit}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      </div>
+    <aside class={classes} data-ad-slot={name} aria-label="Advertisement">
+      <p class="ad-slot__label">Ad</p>
+      <ins
+        class="adsbygoogle"
+        style="display:block"
+        data-ad-client={client}
+        data-ad-slot={unit}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
       <script is:inline>
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (e) {}
+        } catch (e) {
+          /* ignore */
+        }
       </script>
     </aside>
   ) : (
     <aside
       class={classes}
-      data-ad-slot={slotName}
+      data-ad-slot={name}
       data-ad-status={live ? 'enabled-no-unit' : 'disabled'}
-      hidden
       aria-hidden="true"
+      hidden
     />
   )
 }

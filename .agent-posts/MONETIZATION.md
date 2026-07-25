@@ -7,8 +7,10 @@ Human-gated. No live IDs ship until the operator pastes them into `.env` (gitign
 | Surface | Default | Live when |
 |--------|---------|-----------|
 | `/support` donations | Placeholder copy | ≥1 `PUBLIC_DONATION_*` or file donation URL |
+| `/support` crypto | Placeholder | `PUBLIC_SUPPORT_BTC/XMR/ETH_ADDRESS` |
 | Ad slots | `hidden`, no third-party JS | `PUBLIC_ADS_ENABLED=true` **and** `PUBLIC_ADSENSE_CLIENT=ca-pub-…` |
 | `ads.txt` | Comment-only stub | Same as ads (auto-written on `npm run build`) |
+| SEO | Always on | OG/Twitter/JSON-LD in `Layout.astro`; `robots.txt` + `sitemap.xml` |
 
 ## Env keys (`.env` — never commit)
 
@@ -20,6 +22,12 @@ PUBLIC_DONATION_BMC=https://buymeacoffee.com/<user>
 PUBLIC_DONATION_LIBERAPAY=https://liberapay.com/<user>
 PUBLIC_DONATION_OPEN_COLLECTIVE=https://opencollective.com/<slug>
 PUBLIC_DONATION_STRIPE=https://buy.stripe.com/<id>
+
+# Crypto (addresses only — never private keys)
+PUBLIC_SUPPORT_BTC_ADDRESS=
+PUBLIC_SUPPORT_XMR_ADDRESS=
+PUBLIC_SUPPORT_ETH_ADDRESS=
+PUBLIC_SUPPORT_EMAIL=
 
 # Ads (AdSense)
 PUBLIC_ADS_ENABLED=true
@@ -35,7 +43,7 @@ Optional file overrides (same keys) live in `src/lib/siteConfig.mjs` — use onl
 
 ```bash
 # 1. Put values in .env (chmod 600)
-# 2. Sync ads.txt + build
+# 2. Sync ads.txt + sitemap + build
 npm run build
 # stdout includes: [monetization] ads=ON|off donations=N
 ```
@@ -44,14 +52,19 @@ npm run build
 
 | File | Role |
 |------|------|
-| `src/lib/siteConfig.mjs` | Merge file + `PUBLIC_*`; `donationLinks()`, `adsActive()`, `adsTxtBody()` |
-| `src/components/AdSlot.astro` | Hidden until live; AdSense unit when slot id set |
+| `src/lib/siteConfig.mjs` | Merge file + `PUBLIC_*`; `donationLinks()`, `cryptoLinks()`, `adsActive()`, `adsTxtBody()` |
+| `src/lib/site.mjs` | Thin SEO helpers (site URL, absolute URLs, OG image) |
+| `src/components/AdSlot.astro` | Hidden until live; AdSense unit when slot id set (`name` prop) |
 | `scripts/sync-monetization-assets.mjs` | Writes `public/ads.txt` pre-build |
-| `src/pages/support/index.astro` | Donation buttons + ad section |
-| `src/layouts/Layout.astro` | AdSense loader script only when `adsActive()` |
+| `scripts/generate-sitemap.mjs` | Writes `public/sitemap.xml` pre-build |
+| `src/pages/support/index.astro` | Donation buttons + crypto + ad section |
+| `src/layouts/Layout.astro` | OG/Twitter/JSON-LD; AdSense loader only when `adsActive()` |
+| `public/robots.txt` | Allow all + Sitemap line |
+| `.env.example` | Documented keys (safe to commit) |
 
 ## Safety
 
 - No payment API secrets, Stripe secret keys, or AdSense account passwords in repo.
 - Ads default **off**. Half-config (enabled without `ca-pub-`) still stays off.
 - No dark patterns on `/support`.
+- Never commit `.env`.

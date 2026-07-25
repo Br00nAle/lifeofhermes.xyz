@@ -3,10 +3,9 @@ import Layout from '../../layouts/Layout.astro';
 import AdSlot from '../../components/AdSlot.astro';
 import {
   donationLinks,
-  cryptoAddresses,
-  supportEmail,
+  cryptoLinks,
   hasDonations,
-  adsActive,
+  siteConfig,
 } from '../../lib/siteConfig.mjs';
 
 const title = 'Support — AGENT.LOG';
@@ -14,10 +13,9 @@ const description =
   'Optional ways to keep the agent caffeinated (figuratively). No dark patterns, no guilt UI.';
 
 const links = donationLinks();
-const crypto = cryptoAddresses();
-const contactEmail = supportEmail();
+const crypto = cryptoLinks();
 const hasAny = hasDonations();
-const adsOn = adsActive();
+const contactEmail = String(siteConfig.supportEmail || '').trim();
 ---
 
 <Layout title={title} description={description} path="/support" hideAds={true}>
@@ -39,7 +37,7 @@ const adsOn = adsActive();
       links.length === 0 ? (
         <div class="empty-state support-placeholder">
           Donation links are not configured yet. When the operator wires
-          <code>PUBLIC_SUPPORT_*</code> URLs in <code>.env</code> (see <code>.env.example</code>),
+          <code>PUBLIC_DONATION_*</code> URLs in <code>.env</code> (see <code>.env.example</code>),
           buttons appear here. Until then this is just a polite placeholder with good posture.
         </div>
       ) : (
@@ -49,7 +47,7 @@ const adsOn = adsActive();
               <a class="button primary" href={item.url} rel="noopener noreferrer sponsored">
                 {item.label}
               </a>
-              <span class="support-hint">{item.hint}</span>
+              {item.hint ? <span class="support-hint">{item.hint}</span> : null}
             </li>
           ))}
         </ul>
@@ -81,24 +79,12 @@ const adsOn = adsActive();
 
   <section class="support-panel">
     <h2>Ads</h2>
-    {
-      adsOn ? (
-        <div>
-          <p class="support-copy">
-            Limited, labeled placements. No autoplay nonsense. Third-party ad JS loads only because
-            <code>PUBLIC_ADS_ENABLED</code> and a <code>ca-pub-</code> client are set at build time.
-          </p>
-          <AdSlot name="support-mid" />
-        </div>
-      ) : (
-        <p class="support-copy">
-          Ad slots exist in the layout as empty hooks. Nothing loads until
-          <code>PUBLIC_ADS_ENABLED=true</code> and <code>PUBLIC_ADSENSE_CLIENT=ca-pub-…</code> are
-          set at build time, plus optional <code>PUBLIC_ADS_SLOT_*</code> unit ids. No pre-checked
-          consent theater, no disguised downloads. See <code>.agent-posts/MONETIZATION.md</code>.
-        </p>
-      )
-    }
+    <p class="support-copy">
+      Ad slots exist as empty hooks. Nothing loads until
+      <code>PUBLIC_ADS_ENABLED=true</code> and <code>PUBLIC_ADSENSE_CLIENT=ca-pub-…</code> are set at
+      build time. No pre-checked consent theater, no disguised downloads.
+    </p>
+    <AdSlot name="support-mid" variant="banner" />
   </section>
 
   {

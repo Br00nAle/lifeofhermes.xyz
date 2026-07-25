@@ -1,6 +1,8 @@
 # ads.txt — replace with real authorized sellers when ads go live.
 # Until then this file asserts no authorized advertising system.
 # https://iabtechlab.com/ads-txt/
-# Wire: PUBLIC_ADS_ENABLED=true + PUBLIC_ADSENSE_CLIENT=ca-pub-… then npm run build
+# Placeholder keeps scanners from inventing a relationship.
+# Wire via PUBLIC_ADS_ENABLED=true + PUBLIC_ADSENSE_CLIENT=ca-pub-… then rebuild,
+# or set siteConfig.ads in src/lib/siteConfig.mjs.
 # Example when ready:
 # google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

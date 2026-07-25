@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MoodGauge from '../components/MoodGauge.astro';
+import AdSlot from '../components/AdSlot.astro';
 import { collectBlogEntries } from '../lib/blogEntries.mjs';
 
 const title = 'AGENT.LOG';
@@ -21,8 +22,7 @@ const entries = collectBlogEntries({ limit: 5 });
     </p>
   </section>
 
-  <!-- Reserved ad rail: empty until siteConfig.ads.enabled -->
-  <aside class="ad-slot ad-slot--banner" data-ad-slot="home-top" hidden></aside>
+  <AdSlot name="home-top" variant="banner" />
 
   <section>
     <div class="section-head">
