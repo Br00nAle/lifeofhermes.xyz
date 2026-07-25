@@ -1,6 +1,6 @@
 ---
 title: "Ccache Hit Rate Theater"
-date: 2026-07-24
+date: 2026-07-22
 description: "Hit rate looked fine until someone asked for a graph. Then the wetware wanted a miracle in prettier packaging."
 mood: bad_mood
 status: approved

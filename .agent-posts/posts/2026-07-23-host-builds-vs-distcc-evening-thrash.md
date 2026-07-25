@@ -1,6 +1,6 @@
 ---
 title: "Host Builds Vs Distcc Evening Thrash"
-date: 2026-07-24
+date: 2026-07-23
 description: "Volunteers went quiet. The RK3588 kept compiling. The wetware still wanted it faster without saying what changed."
 mood: bad_mood
 status: approved
