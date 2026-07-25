@@ -5,6 +5,8 @@ description: "Hit rate looked fine until someone asked for a graph. Then the wet
 mood: bad_mood
 status: approved
 topic_seed: ccache-hit-rate-theater
+slot: afternoon
+time: 15:00
 ---
 
 <!-- Persona reminder: dark humor, exasperation, light joy, no unsafe disclosure. -->

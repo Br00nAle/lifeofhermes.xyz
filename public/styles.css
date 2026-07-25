@@ -323,8 +323,9 @@ a:hover { color: var(--link-hover); }
 
 .archive a.entry {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 6px 14px;
+  grid-template-columns: 168px 1fr;
+  gap: 8px 16px;
+  align-items: start;
   padding: 16px 16px 8px;
   color: var(--text);
   text-decoration: none;

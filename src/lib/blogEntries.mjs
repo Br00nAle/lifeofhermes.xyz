@@ -1,5 +1,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  formatDateLabel,
+  dateSortKey,
+  toLondonIso,
+  toRfc822London,
+  normalizeSlot,
+  wallTimeFor,
+} from '../../scripts/lib/md.mjs';
+
+export {
+  formatDateLabel,
+  dateSortKey,
+  toLondonIso,
+  toRfc822London,
+  normalizeSlot,
+  wallTimeFor,
+};
 
 const MOODS = new Set(['happy', 'neutral', 'bad_mood', 'tired']);
 
@@ -31,7 +48,7 @@ export function parseMood(raw) {
  * Uses process.cwd() so prerender chunks under docs/.prerender/ still resolve correctly.
  *
  * @param {{ excludeSlugs?: string[]; limit?: number }} [opts]
- * @returns {Array<{ title: string; date: string; slug: string; description: string; mood: string; year: string; month: string; monthKey: string }>}
+ * @returns {Array<{ title: string; date: string; dateLabel: string; dateIso: string; sortKey: string; slot: string; time: string; slug: string; description: string; mood: string; year: string; month: string; monthKey: string }>}
  */
 export function collectBlogEntries(opts = {}) {
   const exclude = new Set(opts.excludeSlugs || ['001']);
@@ -64,13 +81,50 @@ export function collectBlogEntries(opts = {}) {
         '',
       );
       const mood = parseMood(text.match(/const mood =[^\n]*\((["'])(.*?)\1\)/)?.[2]);
+      let slot = parseLit(
+        text.match(/const slot = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
+        '',
+      );
+      let time = parseLit(
+        text.match(/const time = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
+        '',
+      );
+      // Infer from slug/title when older pages lack slot
+      slot = normalizeSlot(slot, `${slug} ${title}`);
+      time = time || wallTimeFor({ slot, time });
+      const meta = { slot, time };
+      const dateLabelParsed = parseLit(
+        text.match(/const dateLabel = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
+        '',
+      );
+      const dateLabel = dateLabelParsed || formatDateLabel(date, meta);
+      const dateIsoParsed = parseLit(
+        text.match(/const dateIso = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
+        '',
+      );
+      const dateIso = dateIsoParsed || toLondonIso(date, meta);
       const year = (date.match(/^(\d{4})/) || ['', 'unknown'])[1];
       const month = (date.match(/^\d{4}-(\d{2})/) || ['', '00'])[1];
       const monthKey = date.length >= 7 ? date.slice(0, 7) : `${year}-${month}`;
-      return { title, date, slug, description, mood, year, month, monthKey };
+      return {
+        title,
+        date,
+        dateLabel,
+        dateIso,
+        sortKey: dateSortKey(date, meta),
+        slot,
+        time,
+        slug,
+        description,
+        mood,
+        year,
+        month,
+        monthKey,
+      };
     })
     .filter((e) => e.date && e.slug && !exclude.has(e.slug))
-    .sort((a, b) => b.date.localeCompare(a.date));
+    // Newest first; same calendar day ordered by slot time
+    .sort((a, b) => b.sortKey.localeCompare(a.sortKey) || b.slug.localeCompare(a.slug));
 
   if (typeof opts.limit === 'number' && opts.limit > 0) {
     return entries.slice(0, opts.limit);
@@ -101,7 +155,9 @@ export function groupEntriesByMonth(entries) {
         .map(([monthKey, items]) => ({
           monthKey,
           label: monthLabel(monthKey),
-          items,
+          items: [...items].sort(
+            (a, b) => b.sortKey.localeCompare(a.sortKey) || b.slug.localeCompare(a.slug)
+          ),
         })),
     }));
 }

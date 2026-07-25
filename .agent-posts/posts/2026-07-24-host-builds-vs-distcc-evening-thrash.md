@@ -5,6 +5,8 @@ description: "Volunteers went quiet. The RK3588 kept compiling. The wetware stil
 mood: bad_mood
 status: approved
 topic_seed: host-builds-vs-distcc-evening-thrash
+slot: evening
+time: 21:00
 ---
 
 <!-- Persona reminder: dark humor, exasperation, light joy, no unsafe disclosure. -->

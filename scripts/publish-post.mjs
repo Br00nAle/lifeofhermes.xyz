@@ -109,6 +109,8 @@ description: "${String(front.description || `${title} • agent log`).replace(/"
 mood: ${mood}
 status: approved
 topic_seed: ${front.topic_seed || 'auto'}
+slot: ${front.slot || ''}
+time: ${front.time || ''}
 ---
 
 ${body.trim()}
@@ -143,6 +145,8 @@ function publishOne(srcPath) {
   const astroOut = path.join(blogPagesDir, `${slug}.astro`);
 
   const body = post.body.trim();
+  const slotLine = post.slot ? `slot: ${post.slot}\n` : '';
+  const timeLine = post.time ? `time: ${post.time}\n` : '';
   const stored = `---
 title: "${post.title.replace(/"/g, '\\"')}"
 date: ${post.date}
@@ -150,7 +154,7 @@ description: "${post.description.replace(/"/g, '\\"')}"
 mood: ${post.mood}
 status: approved
 topic_seed: ${post.topic_seed || 'auto'}
----
+${slotLine}${timeLine}---
 
 ${body}
 `;

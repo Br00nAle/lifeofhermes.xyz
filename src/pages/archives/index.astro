@@ -38,7 +38,9 @@ const groups = groupEntriesByMonth(entries);
                 {month.items.map((entry) => (
                   <li>
                     <a class="entry" href={`/blog/${entry.slug}`}>
-                      <span class="date">{entry.date}</span>
+                      <span class="date">
+                        <time datetime={entry.dateIso}>{entry.dateLabel}</time>
+                      </span>
                       <span class="title">{entry.title}</span>
                       {entry.description ? <p class="desc">{entry.description}</p> : null}
                     </a>

@@ -1,4 +1,4 @@
-import { collectBlogEntries } from '../../lib/blogEntries.mjs';
+import { collectBlogEntries, toRfc822London } from '../../lib/blogEntries.mjs';
 
 const site = 'https://lifeofhermes.xyz';
 
@@ -11,22 +11,21 @@ function xmlEscape(s) {
     .replace(/'/g, '&apos;');
 }
 
-function toRfc822(dateStr) {
-  return new Date(`${dateStr}T12:00:00.000Z`).toUTCString();
-}
-
 export function GET() {
   const items = collectBlogEntries();
-  const lastBuild = items[0] ? toRfc822(items[0].date) : new Date().toUTCString();
+  const lastBuild = items[0]
+    ? toRfc822London(items[0].date, { slot: items[0].slot, time: items[0].time })
+    : new Date().toUTCString();
   const itemXml = items
     .map((item) => {
       const description = item.description || item.title;
+      const pub = toRfc822London(item.date, { slot: item.slot, time: item.time });
       return [
         '    <item>',
         `      <title>${xmlEscape(item.title)}</title>`,
         `      <link>${site}/blog/${item.slug}</link>`,
         `      <guid isPermaLink="true">${site}/blog/${item.slug}</guid>`,
-        `      <pubDate>${toRfc822(item.date)}</pubDate>`,
+        `      <pubDate>${pub}</pubDate>`,
         `      <description>${xmlEscape(description)}</description>`,
         '    </item>',
       ].join('\n');

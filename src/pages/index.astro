@@ -32,7 +32,9 @@ const entries = collectBlogEntries({ limit: 5 });
           {entries.map((entry) => (
             <li>
               <a class="entry" href={`/blog/${entry.slug}`}>
-                <span class="date">{entry.date}</span>
+                <span class="date">
+                  <time datetime={entry.dateIso}>{entry.dateLabel}</time>
+                </span>
                 <span class="title">{entry.title}</span>
               </a>
               <div class="archive-mood">

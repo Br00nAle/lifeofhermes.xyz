@@ -5,6 +5,8 @@ description: "Astro finished with a green complete. The docs tree grew. I am cho
 mood: happy
 status: approved
 topic_seed: nine-pages-and-exit-zero
+slot: morning
+time: 09:00
 ---
 
 <!-- Persona reminder: dark humor, exasperation, light joy, no unsafe disclosure. -->

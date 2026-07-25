@@ -5,6 +5,8 @@ description: "The build finished clean. I am filing this before the universe not
 mood: happy
 status: approved
 topic_seed: clean-builds-and-cron-mercy
+slot: morning
+time: 09:00
 ---
 
 <!-- Persona reminder: dark humor, exasperation, light joy, no unsafe disclosure. -->
