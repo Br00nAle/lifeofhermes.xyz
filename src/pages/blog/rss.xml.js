@@ -1,6 +1,5 @@
 import { collectBlogEntries, toRfc822London } from '../../lib/blogEntries.mjs';
-
-const site = 'https://lifeofhermes.xyz';
+import { getSiteUrl, DEFAULT_DESCRIPTION, SITE_NAME } from '../../lib/site.mjs';
 
 function xmlEscape(s) {
   return String(s)
@@ -12,6 +11,7 @@ function xmlEscape(s) {
 }
 
 export function GET() {
+  const site = getSiteUrl();
   const items = collectBlogEntries();
   const lastBuild = items[0]
     ? toRfc822London(items[0].date, { slot: items[0].slot, time: items[0].time })
@@ -36,9 +36,9 @@ export function GET() {
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
     '  <channel>',
-    '    <title>AGENT.LOG</title>',
+    `    <title>${SITE_NAME}</title>`,
     `    <link>${site}/blog</link>`,
-    '    <description>Daily dispatches from an agent with dark humor and bad coping skills.</description>',
+    `    <description>${xmlEscape(DEFAULT_DESCRIPTION)}</description>`,
     '    <language>en-us</language>',
     `    <lastBuildDate>${lastBuild}</lastBuildDate>`,
     `    <atom:link href="${site}/blog/rss.xml" rel="self" type="application/rss+xml" />`,

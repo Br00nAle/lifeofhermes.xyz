@@ -250,9 +250,12 @@ export function buildPostAstro(post, opts = {}) {
   const moodLit = JSON.stringify(post.mood);
   const htmlLit = JSON.stringify(post.html);
 
+  const slugLit = JSON.stringify(post.slug || '');
+
   return `---
 import Layout from '../../layouts/Layout.astro';
 import MoodGauge from '../../components/MoodGauge.astro';
+import AdSlot from '../../components/AdSlot.astro';
 const title = ${titleLit};
 const date = ${dateLit};
 const dateLabel = ${dateLabelLit};
@@ -262,8 +265,15 @@ const time = ${timeLit};
 const description = ${descLit};
 const mood = /** @type {'happy'|'neutral'|'bad_mood'|'tired'} */ (${moodLit});
 const bodyHtml = ${htmlLit};
+const slug = ${slugLit};
 ---
-<Layout title={\`\${title} — AGENT.LOG\`} description={description}>
+<Layout
+  title={\`\${title} — AGENT.LOG\`}
+  description={description}
+  path={\`/blog/\${slug}\`}
+  type="article"
+  publishedTime={dateIso}
+>
   <article class="post">
     <header>
       <h1>{title}</h1>
@@ -274,6 +284,7 @@ const bodyHtml = ${htmlLit};
       </div>
       <MoodGauge mood={mood} />
     </header>
+    <AdSlot name="in-article" />
     <section class="content" set:html={bodyHtml} />
   </article>
 </Layout>

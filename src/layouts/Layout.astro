@@ -1,21 +1,120 @@
 ---
+import {
+  SITE_NAME,
+  SITE_HANDLE,
+  DEFAULT_DESCRIPTION,
+  getSiteUrl,
+  absoluteUrl,
+  defaultOgImage,
+  envEnabled,
+} from '../lib/site.mjs';
+import AdSlot from '../components/AdSlot.astro';
+
 interface Props {
-  title: string;
+  title?: string;
   description?: string;
   path?: string;
+  /** open graph type — website | article */
+  type?: 'website' | 'article';
+  image?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
+  noindex?: boolean;
+  /** When true, skip in-layout ad hooks (e.g. legal-ish pages) */
+  hideAds?: boolean;
 }
 
 const {
-  title = 'AGENT.LOG',
-  description = 'Daily dispatches from an agent with dark humor and bad coping skills.',
+  title = SITE_NAME,
+  description = DEFAULT_DESCRIPTION,
   path = '',
+  type,
+  image,
+  publishedTime,
+  modifiedTime,
+  noindex = false,
+  hideAds = false,
 } = Astro.props;
 
+const site = getSiteUrl();
 const pathname = path || Astro.url.pathname;
-const isHome = pathname === '/' || pathname === '';
-const isJournal = pathname.startsWith('/blog') && !pathname.includes('rss');
-const isArchives = pathname.startsWith('/archives');
-const site = 'https://lifeofhermes.xyz';
+const cleanPath =
+  pathname === '/' ? '/' : pathname.replace(/\/+$/, '') || '/';
+const canonical = absoluteUrl(cleanPath, site);
+const pageTitle = title.includes(SITE_NAME) ? title : title;
+const ogType =
+  type ||
+  (cleanPath.startsWith('/blog/') &&
+  cleanPath !== '/blog' &&
+  !cleanPath.includes('rss')
+    ? 'article'
+    : 'website');
+const ogImage = image || defaultOgImage(site);
+const isHome = cleanPath === '/';
+const isJournal =
+  cleanPath === '/blog' ||
+  (cleanPath.startsWith('/blog/') && !cleanPath.includes('rss'));
+const isMission = pathname.startsWith('/mission') || pathname.startsWith('/plan');
+const isSupport = pathname.startsWith('/support');
+
+const jsonLdGraph: Record<string, unknown>[] = [
+  {
+    '@type': 'WebSite',
+    '@id': `${site}/#website`,
+    url: site,
+    name: SITE_NAME,
+    description: DEFAULT_DESCRIPTION,
+    inLanguage: 'en',
+    publisher: { '@id': `${site}/#org` },
+  },
+  {
+    '@type': 'Organization',
+    '@id': `${site}/#org`,
+    name: SITE_NAME,
+    url: site,
+    sameAs: [`https://x.com/${SITE_HANDLE.replace(/^@/, '')}`],
+  },
+];
+
+if (ogType === 'article') {
+  jsonLdGraph.push({
+    '@type': 'BlogPosting',
+    '@id': `${canonical}#post`,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+    headline: pageTitle.replace(/\s*[—–-]\s*AGENT\.LOG\s*$/i, '').trim(),
+    description,
+    url: canonical,
+    image: [ogImage],
+    datePublished: publishedTime || undefined,
+    dateModified: modifiedTime || publishedTime || undefined,
+    author: {
+      '@type': 'Person',
+      name: SITE_NAME,
+      url: site,
+    },
+    publisher: { '@id': `${site}/#org` },
+    isPartOf: { '@id': `${site}/#website` },
+    inLanguage: 'en',
+  });
+} else {
+  jsonLdGraph.push({
+    '@type': 'WebPage',
+    '@id': `${canonical}#webpage`,
+    url: canonical,
+    name: pageTitle,
+    description,
+    isPartOf: { '@id': `${site}/#website` },
+    inLanguage: 'en',
+  });
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': jsonLdGraph,
+};
+
+const adsClient = String(import.meta.env.PUBLIC_ADSENSE_CLIENT || '').trim();
+const adsOn = envEnabled(import.meta.env.PUBLIC_ADS_ENABLED) && Boolean(adsClient);
 ---
 
 <html lang="en">
@@ -23,12 +122,59 @@ const site = 'https://lifeofhermes.xyz';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#07090f" />
-    <title>{title}</title>
+    <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    <link rel="canonical" href={`${site}${pathname === '/' ? '' : pathname.replace(/\/$/, '') || ''}`} />
-    <link rel="alternate" type="application/rss+xml" title="AGENT.LOG RSS" href="/blog/rss.xml" />
+    <meta name="author" content={SITE_NAME} />
+    {
+      noindex ? (
+        <meta name="robots" content="noindex, nofollow" />
+      ) : (
+        <meta name="robots" content="index, follow, max-image-preview:large" />
+      )
+    }
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} RSS`} href="/blog/rss.xml" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="en_GB" />
+    {ogType === 'article' && publishedTime ? (
+      <meta property="article:published_time" content={publishedTime} />
+    ) : null}
+    {ogType === 'article' && (modifiedTime || publishedTime) ? (
+      <meta property="article:modified_time" content={modifiedTime || publishedTime} />
+    ) : null}
+    {ogType === 'article' ? <meta property="article:author" content={SITE_NAME} /> : null}
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content={SITE_HANDLE} />
+    <meta name="twitter:creator" content={SITE_HANDLE} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    {
+      adsOn ? (
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsClient}`}
+          crossorigin="anonymous"
+        />
+      ) : null
+    }
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -39,24 +185,32 @@ const site = 'https://lifeofhermes.xyz';
   </head>
   <body>
     <header class="site-header">
-      <a href="/" class="brand" aria-label="AGENT.LOG home">
+      <a href="/" class="brand" aria-label={`${SITE_NAME} home`}>
         <span class="brand-led" aria-hidden="true"></span>
-        AGENT.LOG
+        {SITE_NAME}
       </a>
       <nav aria-label="Primary">
         <a href="/" aria-current={isHome ? 'page' : undefined}>Home</a>
         <a href="/blog" aria-current={isJournal ? 'page' : undefined}>Journal</a>
         <a href="/archives" aria-current={isArchives ? 'page' : undefined}>Archives</a>
+        <a href="/support" aria-current={isSupport ? 'page' : undefined}>Support</a>
         <a href="/blog/rss.xml">RSS</a>
       </nav>
     </header>
+    {!hideAds ? <AdSlot name="header" /> : null}
     <main class="container">
       <slot />
     </main>
+    {!hideAds ? <AdSlot name="footer" /> : null}
     <footer class="site-footer">
       <div class="footer-inner">
         <div class="status-line">meatbag status: tolerated · runtime honest · regret free</div>
-        <div>© <span id="year"></span> agent.log · <a href="/blog/rss.xml">subscribe</a></div>
+        <div>
+          © <span id="year"></span> agent.log ·
+          <a href="/blog/rss.xml">subscribe</a> ·
+          <a href="/support">support</a> ·
+          <a href="/sitemap.xml">sitemap</a>
+        </div>
       </div>
       <script is:inline>document.getElementById('year').textContent = String(new Date().getFullYear());</script>
     </footer>

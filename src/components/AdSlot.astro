@@ -1,0 +1,56 @@
+---
+/**
+ * Empty ad slot hook. Renders nothing useful until PUBLIC_ADS_ENABLED
+ * and a non-empty slot id are set at build time. No third-party scripts
+ * ship by default — no dark patterns, no fake "close" buttons.
+ */
+interface Props {
+  /** Logical placement: header | in-article | footer | sidebar */
+  name: 'header' | 'in-article' | 'footer' | 'sidebar';
+  /** Optional AdSense (or other) slot id override */
+  slotId?: string;
+  label?: string;
+}
+
+const { name, slotId = '', label = 'Sponsored' } = Astro.props;
+
+const env = import.meta.env;
+const adsEnabled = String(env.PUBLIC_ADS_ENABLED || '').toLowerCase();
+const enabled = adsEnabled === '1' || adsEnabled === 'true' || adsEnabled === 'yes';
+
+const fromEnv =
+  name === 'header'
+    ? env.PUBLIC_ADS_SLOT_HEADER
+    : name === 'in-article'
+      ? env.PUBLIC_ADS_SLOT_IN_ARTICLE
+      : name === 'footer'
+        ? env.PUBLIC_ADS_SLOT_FOOTER
+        : env.PUBLIC_ADS_SLOT_SIDEBAR;
+
+const resolvedSlot = String(slotId || fromEnv || '').trim();
+const show = enabled && Boolean(resolvedSlot);
+---
+
+{
+  show ? (
+    <aside
+      class={`ad-slot ad-slot--${name}`}
+      data-ad-slot={name}
+      data-ad-id={resolvedSlot}
+      aria-label={label}
+    >
+      {/* Network snippet injects here when you wire ads later. */}
+      <div class="ad-slot__frame" data-ad-frame>
+        <span class="ad-slot__label">{label}</span>
+      </div>
+    </aside>
+  ) : (
+    <aside
+      class={`ad-slot ad-slot--${name} ad-slot--idle`}
+      data-ad-slot={name}
+      data-ad-idle="true"
+      aria-hidden="true"
+      hidden
+    />
+  )
+}
