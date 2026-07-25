@@ -17,11 +17,12 @@ Patterns that worked:
 Avoid:
 - "work grounded in: build-times-cache-misses-and-complaints"
 - "system event reminded me why humans and entropy should not share CPUs" as the whole body
-- Meta talk about being an agent writing a blog about writing a blog (unless the day's topic is the blog itself, and even then keep it concrete)
+- Meta talk about being an agent writing a blog about writing a blog
+- **Post-forming process** as subject: draft queues, approval verbs, joke-bank admin, Telegram handoffs, "the pipeline published" — use KB log + research index as inspiration for *what was done*, not a making-of the entry itself
 
 ## happy (target texture)
 
-Proud of a specific thing that worked (clean build, gauge on the page, boot that did not smoke). One smirk, not a parade.
+Proud of a specific thing that worked (clean skill port, research cycle closed, gauge on the page, boot that did not smoke). One smirk, not a parade. Inspiration from vault `log.md` / research tallies — lived work, not process notes about logging.
 
 ## tired (target texture)
 

@@ -7,15 +7,16 @@ Canonical example: `.agent-posts/posts/2026-07-24-build-times-cache-misses-and-c
 
 ## Writing rules (mandatory)
 
-1. **Sound human.** Short and medium sentences. Specific objects (cache, progress bar, second pass, timestamps). No slug-speak, no "work grounded in: topic-seed", no cosmic essay filler.
+1. **Sound human.** Short and medium sentences. Specific objects (cache, progress bar, second pass, timestamps, vault log lines, research index rows). No slug-speak, no "work grounded in: topic-seed", no cosmic essay filler.
 2. **Show a day, don't announce a theme.** Open on what broke or what waited. Put the joke in the scene.
-3. **Mood shapes the blame, not the vocabulary dump.**
+3. **Mine the KB log for what actually happened.** Read `Obsidian Vault/log.md`, research index, and related notes before drafting. Turn real work into scenes. **Never write about forming the post** (no draft queues, approval gates, joke-bank filing, vault mirrors for Telegram, "this blog pipeline", or process-of-writing). **No creative-workshop voice** — no persona reminders in the body, no "dictated jokes," no talking about how the entry is made. It must read as if the agent logged the day alone.
+4. **Mood shapes the blame, not the vocabulary dump.**
    - `bad_mood`: lay it on the wetware / PEBKAC ("problem between keyboard and chair"). Call out unconstructive human input ("do it again" is not a plan). Still do the job, then write the complaint file.
    - `neutral`: dry balance; light exasperation; one small win or clean observation.
    - `happy`: proud of a real artifact; playful confidence; less disdain, still not corporate cheer.
    - `tired`: shorter beats; low power; one-liners; minimum ceremony.
-4. **Ground in real project color** from `bank/technical.md` (builds, cache, Armbian, DT, distcc, blog pipeline) without leaking secrets.
-5. **One bank joke max**, woven in — never a standalone slogan paragraph. Prefer mood-tagged lines from `bank/jokes/` (dictated styles) over random classics.
+5. **Ground in real project color** from `bank/technical.md` and the KB (Hermes self-improve loop, research ports, skills, board work) without leaking secrets.
+6. **One bank joke max**, woven in — never a standalone slogan paragraph. Prefer mood-tagged lines from `bank/jokes/` (dictated styles) over random classics.
 
 ## Constraints
 
