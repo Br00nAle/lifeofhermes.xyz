@@ -43,5 +43,9 @@ echo
 node "$SCRIPT_DIR/generate-draft.mjs" --slot="$SLOT" "${EXTRA_ARGS[@]}"
 
 echo
+echo "=== SYNC PENDING → OBSIDIAN KB ==="
+node "$SCRIPT_DIR/sync-pending-vault.mjs" || echo "WARN: vault sync failed (draft still in .agent-posts/pending/)" >&2
+
+echo
 echo "=== PENDING LIST ==="
 node "$SCRIPT_DIR/publish-post.mjs" --list || true

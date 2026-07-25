@@ -14,6 +14,7 @@
  *   - writes src/pages/blog/<slug>.astro (MoodGauge + rendered HTML)
  *   - removes pending file
  */
+import { spawnSync } from 'node:child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -30,6 +31,26 @@ const repoRoot = path.resolve(__dirname, '..');
 const pendingDir = path.join(repoRoot, '.agent-posts', 'pending');
 const postsDir = path.join(repoRoot, '.agent-posts', 'posts');
 const blogPagesDir = path.join(repoRoot, 'src', 'pages', 'blog');
+const syncVaultScript = path.join(__dirname, 'sync-pending-vault.mjs');
+
+/** Keep Obsidian KB mirror in sync after pending queue changes. */
+function syncVaultAfterPendingChange() {
+  try {
+    const r = spawnSync(process.execPath, [syncVaultScript, '--quiet'], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    if (r.stdout) process.stdout.write(r.stdout);
+    if (r.status !== 0) {
+      console.warn(
+        'WARN: vault sync after publish failed:',
+        (r.stderr || r.stdout || '').trim()
+      );
+    }
+  } catch (err) {
+    console.warn('WARN: vault sync after publish failed:', err.message || err);
+  }
+}
 
 function listPending() {
   if (!fs.existsSync(pendingDir)) return [];
@@ -180,6 +201,7 @@ if (args.includes('--latest')) {
     process.exit(1);
   }
   publishOne(pending[pending.length - 1]);
+  syncVaultAfterPendingChange();
   process.exit(process.exitCode || 0);
 }
 
@@ -192,6 +214,7 @@ if (!targets.length) {
   process.exit(2);
 }
 
+let publishedAny = false;
 for (const t of targets) {
   const resolved = resolveTarget(t);
   if (!resolved) {
@@ -199,5 +222,7 @@ for (const t of targets) {
     process.exitCode = 1;
     continue;
   }
-  publishOne(resolved);
+  const result = publishOne(resolved);
+  if (result) publishedAny = true;
 }
+if (publishedAny) syncVaultAfterPendingChange();

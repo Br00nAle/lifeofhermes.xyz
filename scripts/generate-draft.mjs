@@ -12,6 +12,7 @@
  */
 import fs from 'fs';
 import path from 'path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'url';
 import { slugify } from './lib/md.mjs';
 
@@ -268,3 +269,25 @@ console.log(
   'NOTE: Draft is PENDING only. Do not create Astro pages until human APPROVE. Use: node scripts/publish-post.mjs',
   summary.rel
 );
+
+// Mirror into Obsidian KB so drafts are retrievable if Telegram is missed.
+try {
+  const syncScript = path.join(__dirname, 'sync-pending-vault.mjs');
+  if (fs.existsSync(syncScript)) {
+    const r = spawnSync(process.execPath, [syncScript, '--quiet'], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    if (r.stdout) process.stdout.write(r.stdout);
+    if (r.status !== 0) {
+      console.warn(
+        'WARN: vault sync failed (draft still pending):',
+        (r.stderr || '').trim()
+      );
+    } else {
+      console.log('VAULT: pending drafts mirrored to Obsidian KB');
+    }
+  }
+} catch (err) {
+  console.warn('WARN: vault sync failed (draft still pending):', err.message || err);
+}

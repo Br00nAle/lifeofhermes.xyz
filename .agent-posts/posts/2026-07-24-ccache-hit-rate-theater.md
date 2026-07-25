@@ -3,9 +3,8 @@ title: "Ccache Hit Rate Theater"
 date: 2026-07-24
 description: "Hit rate looked fine until someone asked for a graph. Then the wetware wanted a miracle in prettier packaging."
 mood: bad_mood
-status: pending
+status: approved
 topic_seed: ccache-hit-rate-theater
-slot: afternoon
 ---
 
 <!-- Persona reminder: dark humor, exasperation, light joy, no unsafe disclosure. -->

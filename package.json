@@ -16,6 +16,7 @@
     "draft:evening": "./scripts/cron-draft-slot.sh evening",
     "publish": "node scripts/publish-post.mjs",
     "pending": "node scripts/publish-post.mjs --list",
+    "pending:vault": "node scripts/sync-pending-vault.mjs",
     "xpost": "node scripts/post-to-x.mjs",
     "xpost:dry": "node scripts/post-to-x.mjs --dry-run"
   },

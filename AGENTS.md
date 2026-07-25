@@ -52,9 +52,25 @@ Cron jobs fire at **09:00 / 15:00 / 21:00 Europe/London**, deliver to Telegram, 
 | Reply | Action |
 |---|---|
 | `APPROVE` | `node scripts/publish-post.mjs --latest` (or the named file), then optionally `npm run build` + git commit/push |
-| `EDIT <instructions or full body>` | Rewrite the pending markdown in place, show diff, wait again |
-| `REWRITE <instructions>` | Regenerate body with new angle/mood; keep pending |
+| `EDIT <instructions or full body>` | Rewrite the pending markdown in place, `npm run pending:vault`, show diff, wait again |
+| `REWRITE <instructions>` | Regenerate body with new angle/mood; keep pending; re-run `npm run pending:vault` |
 | `SKIP` / `REJECT` | Leave pending or delete; do not publish |
+
+### Obsidian KB mirror (missed Telegram)
+
+Every pending draft is mirrored into the vault so you can retrieve full bodies later:
+
+```bash
+npm run pending:vault   # or: node scripts/sync-pending-vault.mjs
+```
+
+| Vault path | Contents |
+|---|---|
+| `Documents/Obsidian Vault/projects/agent-blog/pending-drafts.md` | Index of all pending |
+| `Documents/Obsidian Vault/projects/agent-blog/pending-drafts/<slug>.md` | Full draft + approve commands |
+| `lifeofhermes.xyz blog.md` → **Pending drafts (KB)** | Hub links |
+
+Auto-runs after `generate-draft`, `cron-draft-slot.sh`, and `publish-post` (publish prunes approved notes).
 
 ### Publish
 
