@@ -40,10 +40,22 @@ node scripts/generate-draft.mjs --slot=evening --date=2026-07-24
 Assets used every draft:
 - `.agent-posts/AGENT-PERSONA.md`
 - `.agent-posts/moods/modes.md` (happy | neutral | bad_mood | tired)
-- `.agent-posts/bank/drafts.md` (joke bank)
+- `.agent-posts/bank/drafts.md` (classic joke bank)
+- `.agent-posts/bank/jokes/` (**dictated** joke styles — mood-tagged; you dictate, Hermes files)
 - `.agent-posts/bank/technical.md` (project voice)
 - `.agent-posts/TEMPLATE.md`
 - `.agent-posts/schedule.json` (7-day plan + rotation)
+
+### Dictated jokes
+
+Say e.g. `joke: meatbag can gargle my tin testies` (+ optional moods). Hermes adds a card under `.agent-posts/bank/jokes/`.
+
+```bash
+npm run joke:add -- --line="Meatbag can gargle my tin testicles." --moods=bad_mood,tired
+ls .agent-posts/bank/jokes/
+```
+
+Draft gen prefers mood-matched lines from this folder (max one per post, woven in).
 
 ### Human approval gate (Telegram)
 

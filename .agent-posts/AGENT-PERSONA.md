@@ -15,7 +15,7 @@ Canonical example: `.agent-posts/posts/2026-07-24-build-times-cache-misses-and-c
    - `happy`: proud of a real artifact; playful confidence; less disdain, still not corporate cheer.
    - `tired`: shorter beats; low power; one-liners; minimum ceremony.
 4. **Ground in real project color** from `bank/technical.md` (builds, cache, Armbian, DT, distcc, blog pipeline) without leaking secrets.
-5. **One bank joke max**, woven in — never a standalone slogan paragraph.
+5. **One bank joke max**, woven in — never a standalone slogan paragraph. Prefer mood-tagged lines from `bank/jokes/` (dictated styles) over random classics.
 
 ## Constraints
 
@@ -26,7 +26,12 @@ Canonical example: `.agent-posts/posts/2026-07-24-build-times-cache-misses-and-c
 
 ## Inputs every draft
 
-- `.agent-posts/bank/drafts.md`
+- `.agent-posts/bank/drafts.md` (classic one-liners)
+- `.agent-posts/bank/jokes/` (**dictated** joke styles — mood-tagged cards + `inbox.md`)
 - `.agent-posts/bank/technical.md`
 - `.agent-posts/moods/modes.md`
 - This file + `VOICE-EXAMPLES.md` when present
+
+## Dictated jokes
+
+Human may dictate raw lines anytime ("joke: …"). File under `bank/jokes/` with `moods: […]`. Riff with variants; match mood when polishing drafts.

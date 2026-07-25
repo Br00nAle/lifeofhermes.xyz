@@ -15,6 +15,7 @@ import path from 'path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'url';
 import { slugify } from './lib/md.mjs';
+import { loadJokeBank, pickJokeForMood, formatJokeBankForPrompt } from './lib/jokes.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -125,6 +126,7 @@ function extractTechnicalItem(technicalText, topicHint) {
 }
 
 function extractJoke(jokesText) {
+  // legacy path — prefer loadJokeBank + pickJokeForMood
   const quoted = [...jokesText.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   if (quoted.length) return pick(quoted);
   const lines = splitLines(jokesText);
@@ -137,9 +139,13 @@ function extractJoke(jokesText) {
 /**
  * Human, scene-based bodies. Never paste topic slugs or "work grounded in:".
  * House style locked 2026-07-24 (see AGENT-PERSONA.md / VOICE-EXAMPLES.md).
+ * @param {string} mood
+ * @param {string} jokeLine  already chosen for mood (may be empty)
+ * @param {string} technical
+ * @param {string} topicHint
  */
-function buildBodyBlock(mood, jokes, technical, topicHint) {
-  const joke = extractJoke(jokes);
+function buildBodyBlock(mood, jokeLine, technical, topicHint) {
+  const joke = (jokeLine || '').trim();
   const tech = extractTechnicalItem(technical, topicHint);
   const opener = joke ? `${joke}\n\n` : '';
 
@@ -185,8 +191,10 @@ const forcedTitle = (args.title || scheduled?.title || '').trim();
 const personaPath = path.join(templatesDir, 'AGENT-PERSONA.md');
 const templatePath = path.join(templatesDir, 'TEMPLATE.md');
 const jokesPath = path.join(templatesDir, 'bank', 'drafts.md');
+const jokesDir = path.join(templatesDir, 'bank', 'jokes');
 const technicalPath = path.join(templatesDir, 'bank', 'technical.md');
 const moodsPath = path.join(templatesDir, 'moods', 'modes.md');
+const bankDir = path.join(templatesDir, 'bank');
 
 // Ensure assets exist (fail loud)
 for (const p of [personaPath, templatePath, jokesPath, technicalPath, moodsPath]) {
@@ -195,13 +203,16 @@ for (const p of [personaPath, templatePath, jokesPath, technicalPath, moodsPath]
     process.exit(1);
   }
 }
+fs.mkdirSync(jokesDir, { recursive: true });
 
 const template = fs.readFileSync(templatePath, 'utf8');
-const jokes = fs.readFileSync(jokesPath, 'utf8');
 const technical = fs.readFileSync(technicalPath, 'utf8');
 // persona + moods loaded for agent context banner (not embedded in draft body)
 const persona = fs.readFileSync(personaPath, 'utf8');
 const moods = fs.readFileSync(moodsPath, 'utf8');
+
+const jokeBank = loadJokeBank(bankDir);
+const jokeLine = pickJokeForMood(jokeBank, mood);
 
 const safeSeed =
   slugify(seedTopic || forcedTitle || `agent-log-${date}-${slot}`) ||
@@ -211,7 +222,7 @@ const title =
   forcedTitle ||
   safeSeed.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-const body = buildBodyBlock(mood, jokes, technical, seedTopic);
+const body = buildBodyBlock(mood, jokeLine, technical, seedTopic);
 const description = lineForMood(mood);
 
 // Single frontmatter block (status pending). Template also has frontmatter —
@@ -257,11 +268,14 @@ console.log('SLOT:', slot);
 console.log('DATE:', date);
 console.log('TOPIC:', summary.topic);
 console.log('TITLE:', title);
-console.log('SUMMARY_JSON:', JSON.stringify(summary));
+console.log('JOKE:', jokeLine || '(none)');
+console.log('SUMMARY_JSON:', JSON.stringify({ ...summary, joke: jokeLine || '' }));
 console.log('---PERSONA---');
 console.log(persona.trim());
 console.log('---MOODS---');
 console.log(moods.trim());
+console.log('---JOKE-BANK (mood-matched)---');
+console.log(formatJokeBankForPrompt(jokeBank, mood));
 console.log('---DRAFT-START---');
 console.log(fs.readFileSync(draftPath, 'utf8'));
 console.log('---DRAFT-END---');

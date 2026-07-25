@@ -17,6 +17,7 @@
     "publish": "node scripts/publish-post.mjs",
     "pending": "node scripts/publish-post.mjs --list",
     "pending:vault": "node scripts/sync-pending-vault.mjs",
+    "joke:add": "node scripts/add-joke.mjs",
     "xpost": "node scripts/post-to-x.mjs",
     "xpost:dry": "node scripts/post-to-x.mjs --dry-run"
   },
