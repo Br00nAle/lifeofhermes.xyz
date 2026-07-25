@@ -73,58 +73,87 @@ function parseMoodList(raw) {
 function parseJokeFile(filePath) {
   const text = fs.readFileSync(filePath, 'utf8');
   const base = path.basename(filePath, '.md');
+  // Skip docs-only files
+  if (base.toLowerCase() === 'readme') return [];
+
   const { fm, body } = parseFrontmatter(text);
   const id = (fm.id || base).trim();
-  const moods = parseMoodList(fm.moods);
+  const fileMoods = parseMoodList(fm.moods);
   const intensity = (fm.intensity || 'med').toLowerCase();
-  const source = (fm.source || (base === 'inbox' ? 'inbox' : 'curated')).toLowerCase();
+  const source = (
+    fm.source ||
+    (base === 'inbox' ? 'inbox' : base === 'drafts' ? 'classic' : 'curated')
+  ).toLowerCase();
 
   /** @type {JokeLine[]} */
   const out = [];
-
-  // Quoted lines anywhere
-  for (const m of body.matchAll(/"([^"\n]{6,240})"/g)) {
+  const add = (line, moods) => {
+    const hit = String(line || '')
+      .replace(/^["']|["']$/g, '')
+      .trim();
+    if (hit.length < 12) return;
+    // noise filters
+    if (/^(your line as spoken|optional|polished line|raw:|line:)/i.test(hit)) return;
+    if (/^(yes|no|rare)\b/i.test(hit)) return;
+    if (out.some((j) => j.line.toLowerCase() === hit.toLowerCase())) return;
     out.push({
-      line: m[1].trim(),
-      moods: moods.length ? moods : guessMoodsFromText(m[1]),
+      line: hit,
+      moods: moods.length ? moods : guessMoodsFromText(hit),
       id,
       intensity,
       source,
     });
-  }
+  };
 
-  // inbox-style: "- line: …" or "- raw: …" or bare "- …"
-  for (const line of body.split(/\r?\n/)) {
-    const t = line.trim();
-    let hit = '';
-    const kv = t.match(/^[-*]\s*(?:line|raw|variant|variants)\s*:\s*(.+)$/i);
-    if (kv) hit = kv[1].trim();
-    else if (/^[-*]\s*".+"\s*$/.test(t)) hit = t.replace(/^[-*]\s*"|"\s*$/g, '');
-    else if (/^[-*]\s+[^:]{6,240}$/.test(t) && !/^(moods|intensity|id|added|source|notes)\b/i.test(t.slice(2))) {
-      // skip structural bullets already handled
-      const bare = t.replace(/^[-*]\s+/, '').trim();
-      if (!/^(yes|no|rare)/i.test(bare) && !bare.startsWith('http')) hit = bare;
+  // Prefer ## Lines (or ## Variants) sections for quote harvest
+  const sectionRe = /^##\s+(lines|variants)\s*$/gim;
+  const sections = [];
+  let match;
+  const matches = [...body.matchAll(/^##\s+(lines|variants)\s*$/gim)];
+  if (matches.length) {
+    for (let i = 0; i < matches.length; i++) {
+      const start = matches[i].index + matches[i][0].length;
+      const end = i + 1 < matches.length ? matches[i + 1].index : body.length;
+      sections.push(body.slice(start, end));
     }
-    if (!hit) continue;
-    hit = hit.replace(/^["']|["']$/g, '').trim();
-    if (hit.length < 6) continue;
-    // de-dupe
-    if (out.some((j) => j.line === hit)) continue;
-    // entry-local moods override from nearby "moods:" lines is hard; use file moods
-    const entryMoods = moods.length ? moods : guessMoodsFromText(hit);
-    out.push({ line: hit, moods: entryMoods, id, intensity, source });
   }
 
-  // drafts.md style — no fm moods → all moods light touch except we tag neutral default
-  if (!out.length) {
-    for (const m of text.matchAll(/"([^"\n]{6,240})"/g)) {
-      out.push({
-        line: m[1].trim(),
-        moods: moods.length ? moods : ['neutral', 'bad_mood', 'happy', 'tired'],
-        id,
-        intensity,
-        source: source || 'classic',
-      });
+  const quoteTargets = sections.length ? sections.join('\n') : '';
+
+  if (quoteTargets) {
+    for (const m of quoteTargets.matchAll(/"([^"\n]{12,240})"/g)) {
+      add(m[1], fileMoods);
+    }
+    for (const line of quoteTargets.split(/\r?\n/)) {
+      const t = line.trim();
+      const bullet = t.match(/^[-*]\s+(.+)$/);
+      if (!bullet) continue;
+      let v = bullet[1].trim();
+      if (/^(moods|intensity|id|notes)\b/i.test(v)) continue;
+      v = v.replace(/^["']|["']$/g, '');
+      add(v, fileMoods);
+    }
+  }
+
+  // inbox / drafts: explicit keys and classic quoted bullets in whole file
+  if (base === 'inbox' || base === 'drafts' || !sections.length) {
+    // entry moods from nearest preceding "- moods:" when scanning inbox
+    let cursorMoods = fileMoods.slice();
+    for (const line of body.split(/\r?\n/)) {
+      const t = line.trim();
+      const moodsLine = t.match(/^[-*]\s*moods\s*:\s*(.+)$/i);
+      if (moodsLine) {
+        cursorMoods = parseMoodList(moodsLine[1]);
+        continue;
+      }
+      const kv = t.match(/^[-*]\s*(?:line|raw|variant)\s*:\s*(.+)$/i);
+      if (kv) {
+        add(kv[1], cursorMoods.length ? cursorMoods : fileMoods);
+        continue;
+      }
+      // classic drafts.md: - "quoted joke"
+      const q = t.match(/^[-*]\s*"([^"]{12,240})"\s*$/);
+      if (q) add(q[1], fileMoods.length ? fileMoods : guessMoodsFromText(q[1]));
     }
   }
 
@@ -190,16 +219,20 @@ function pick(arr) {
  */
 export function pickJokeForMood(bank, mood) {
   const m = (mood || 'neutral').toLowerCase();
-  const moodHits = bank.filter((j) => j.moods.includes(m));
-  const dictated = moodHits.filter((j) => j.source === 'dictated' || j.source === 'inbox');
-  const pool = dictated.length
-    ? dictated
-    : moodHits.length
-      ? moodHits
-      : bank.filter((j) => j.moods.includes('neutral') || j.moods.length === 0);
-  const finalPool = pool.length ? pool : bank;
-  if (!finalPool.length) return '';
-  return pick(finalPool).line;
+  const usable = bank.filter((j) => j.source !== 'inbox' || j.line.length >= 16);
+  const moodHits = usable.filter((j) => j.moods.includes(m));
+  // Prefer curated/dictated cards over raw inbox duplicates
+  const dictated = moodHits.filter(
+    (j) => j.source === 'dictated' || (j.source === 'curated' && j.id !== 'drafts')
+  );
+  const classic = moodHits.filter((j) => j.source === 'classic' || j.id === 'drafts');
+  const pool = dictated.length ? dictated : classic.length ? classic : moodHits;
+  const finalPool = pool.length
+    ? pool
+    : usable.filter((j) => j.moods.includes('neutral'));
+  const pickFrom = finalPool.length ? finalPool : usable;
+  if (!pickFrom.length) return '';
+  return pick(pickFrom).line;
 }
 
 /**
