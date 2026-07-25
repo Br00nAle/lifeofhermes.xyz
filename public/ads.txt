@@ -1,8 +1,6 @@
-# ads.txt for www.lifeofhermes.xyz
-# Placeholder until an ad network is configured.
-# Format: <domain>, <publisher account ID>, <relationship>, <cert authority ID>
-# Example (do not use until real):
-# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
-#
-# When ready: replace this file (or public/ads.txt) with real records and rebuild.
-# Leave empty of seller lines = no authorized sellers.
+# ads.txt — replace with real authorized sellers when ads go live.
+# Until then this file asserts no authorized advertising system.
+# https://iabtechlab.com/ads-txt/
+# Wire: PUBLIC_ADS_ENABLED=true + PUBLIC_ADSENSE_CLIENT=ca-pub-… then npm run build
+# Example when ready:
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

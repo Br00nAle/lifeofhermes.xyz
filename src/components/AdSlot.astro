@@ -1,56 +1,70 @@
 ---
 /**
- * Empty ad slot hook. Renders nothing useful until PUBLIC_ADS_ENABLED
- * and a non-empty slot id are set at build time. No third-party scripts
- * ship by default — no dark patterns, no fake "close" buttons.
+ * Reserved ad placement.
+ * Prop `name` (preferred) or `slot` — maps to PUBLIC_ADS_SLOT_* / aliases.
+ * Renders nothing visible until adsActive() and a unit id are set.
  */
+import { adsActive, adSlotId, adsClientId } from '../lib/siteConfig.mjs';
+
 interface Props {
-  /** Logical placement: header | in-article | footer | sidebar */
-  name: 'header' | 'in-article' | 'footer' | 'sidebar';
-  /** Optional AdSense (or other) slot id override */
-  slotId?: string;
-  label?: string;
+  /** Logical slot: header | footer | in-article | sidebar | home-top | support-mid */
+  name?: string;
+  /** Alias of name (older call sites) */
+  slot?: string;
+  variant?: 'default' | 'banner';
+  class?: string;
 }
 
-const { name, slotId = '', label = 'Sponsored' } = Astro.props;
+const {
+  name,
+  slot: slotProp,
+  variant = 'default',
+  class: className = '',
+} = Astro.props;
 
-const env = import.meta.env;
-const adsEnabled = String(env.PUBLIC_ADS_ENABLED || '').toLowerCase();
-const enabled = adsEnabled === '1' || adsEnabled === 'true' || adsEnabled === 'yes';
-
-const fromEnv =
-  name === 'header'
-    ? env.PUBLIC_ADS_SLOT_HEADER
-    : name === 'in-article'
-      ? env.PUBLIC_ADS_SLOT_IN_ARTICLE
-      : name === 'footer'
-        ? env.PUBLIC_ADS_SLOT_FOOTER
-        : env.PUBLIC_ADS_SLOT_SIDEBAR;
-
-const resolvedSlot = String(slotId || fromEnv || '').trim();
-const show = enabled && Boolean(resolvedSlot);
+const slotName = (name || slotProp || 'default').trim();
+const live = adsActive();
+const client = adsClientId();
+const unit = adSlotId(slotName);
+const showUnit = live && Boolean(client && unit);
+const classes = [
+  'ad-slot',
+  `ad-slot--${slotName}`,
+  variant === 'banner' ? 'ad-slot--banner' : '',
+  showUnit ? 'ad-slot--live' : 'ad-slot--idle',
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
 ---
 
 {
-  show ? (
-    <aside
-      class={`ad-slot ad-slot--${name}`}
-      data-ad-slot={name}
-      data-ad-id={resolvedSlot}
-      aria-label={label}
-    >
-      {/* Network snippet injects here when you wire ads later. */}
-      <div class="ad-slot__frame" data-ad-frame>
-        <span class="ad-slot__label">{label}</span>
+  showUnit ? (
+    <aside class={classes} data-ad-slot={slotName} aria-label="Advertisement">
+      <span class="ad-slot__label">Ad</span>
+      <div class="ad-slot__frame">
+        <ins
+          class="adsbygoogle"
+          style="display:block"
+          data-ad-client={client}
+          data-ad-slot={unit}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
       </div>
+      <script is:inline>
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {}
+      </script>
     </aside>
   ) : (
     <aside
-      class={`ad-slot ad-slot--${name} ad-slot--idle`}
-      data-ad-slot={name}
-      data-ad-idle="true"
-      aria-hidden="true"
+      class={classes}
+      data-ad-slot={slotName}
+      data-ad-status={live ? 'enabled-no-unit' : 'disabled'}
       hidden
+      aria-hidden="true"
     />
   )
 }

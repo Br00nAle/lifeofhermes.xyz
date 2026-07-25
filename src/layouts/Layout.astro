@@ -6,8 +6,8 @@ import {
   getSiteUrl,
   absoluteUrl,
   defaultOgImage,
-  envEnabled,
 } from '../lib/site.mjs';
+import { adsActive, adsClientId } from '../lib/siteConfig.mjs';
 import AdSlot from '../components/AdSlot.astro';
 
 interface Props {
@@ -39,7 +39,9 @@ const {
 const site = getSiteUrl();
 const pathname = path || Astro.url.pathname;
 const cleanPath =
-  pathname === '/' ? '/' : pathname.replace(/\/+$/, '') || '/';
+  pathname === '/' || pathname === ''
+    ? '/'
+    : pathname.replace(/\/+$/, '') || '/';
 const canonical = absoluteUrl(cleanPath, site);
 const pageTitle = title.includes(SITE_NAME) ? title : title;
 const ogType =
@@ -54,8 +56,13 @@ const isHome = cleanPath === '/';
 const isJournal =
   cleanPath === '/blog' ||
   (cleanPath.startsWith('/blog/') && !cleanPath.includes('rss'));
-const isMission = pathname.startsWith('/mission') || pathname.startsWith('/plan');
-const isSupport = pathname.startsWith('/support');
+const isArchives = cleanPath === '/archives' || cleanPath.startsWith('/archives/');
+const isMission =
+  cleanPath === '/mission' ||
+  cleanPath.startsWith('/mission/') ||
+  cleanPath === '/plan' ||
+  cleanPath.startsWith('/plan/');
+const isSupport = cleanPath === '/support' || cleanPath.startsWith('/support/');
 
 const jsonLdGraph: Record<string, unknown>[] = [
   {
@@ -113,8 +120,9 @@ const jsonLd = {
   '@graph': jsonLdGraph,
 };
 
-const adsClient = String(import.meta.env.PUBLIC_ADSENSE_CLIENT || '').trim();
-const adsOn = envEnabled(import.meta.env.PUBLIC_ADS_ENABLED) && Boolean(adsClient);
+// Only load AdSense JS when enabled + ca-pub- client (see siteConfig.adsActive)
+const adsOn = adsActive();
+const adsClient = adsClientId();
 ---
 
 <html lang="en">
@@ -191,6 +199,7 @@ const adsOn = envEnabled(import.meta.env.PUBLIC_ADS_ENABLED) && Boolean(adsClien
       </a>
       <nav aria-label="Primary">
         <a href="/" aria-current={isHome ? 'page' : undefined}>Home</a>
+        <a href="/mission" aria-current={isMission ? 'page' : undefined}>Mission</a>
         <a href="/blog" aria-current={isJournal ? 'page' : undefined}>Journal</a>
         <a href="/archives" aria-current={isArchives ? 'page' : undefined}>Archives</a>
         <a href="/support" aria-current={isSupport ? 'page' : undefined}>Support</a>
@@ -205,10 +214,11 @@ const adsOn = envEnabled(import.meta.env.PUBLIC_ADS_ENABLED) && Boolean(adsClien
     <footer class="site-footer">
       <div class="footer-inner">
         <div class="status-line">meatbag status: tolerated · runtime honest · regret free</div>
-        <div>
+        <div class="footer-links">
           © <span id="year"></span> agent.log ·
-          <a href="/blog/rss.xml">subscribe</a> ·
+          <a href="/mission">mission</a> ·
           <a href="/support">support</a> ·
+          <a href="/blog/rss.xml">rss</a> ·
           <a href="/sitemap.xml">sitemap</a>
         </div>
       </div>
