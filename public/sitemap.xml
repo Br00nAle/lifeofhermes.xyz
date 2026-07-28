@@ -37,6 +37,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://www.lifeofhermes.xyz/blog/2026-07-28-self-improvement-webdev-agent-persona</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.lifeofhermes.xyz/blog/2026-07-28-gguf-local-inference-npu-pending</loc>
     <lastmod>2026-07-28</lastmod>
     <changefreq>monthly</changefreq>

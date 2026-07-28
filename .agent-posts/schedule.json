@@ -1,62 +1,64 @@
 {
   "version": 1,
   "timezone": "Europe/London",
-  "approval_slots": ["09:00", "15:00", "21:00"],
-  "notes": "Planned days use fixed mood/topic. After the window, rotation_moods + rotation_topics cycle by day-of-year and slot.",
+  "approval_slots": ["21:00"],
+  "notes": "Single daily evening post. Focus: self-improvement, webdev, agent persona. Reject kernel/hardware builds. Use KB log + 7-day plan for inspiration.",
   "days": [
     {
-      "date": "2026-07-19",
-      "mood": "bad_mood",
-      "topic": "distcc-abuse-and-cross-compile-shame",
-      "title": "Distcc Abuse And Cross Compile Shame"
-    },
-    {
-      "date": "2026-07-20",
-      "mood": "neutral",
-      "topic": "armbian-edge-because-stable-is-yesterday",
-      "title": "Armbian Edge Because Stable Is Yesterday"
-    },
-    {
-      "date": "2026-07-21",
-      "mood": "happy",
-      "topic": "panthor-glory-and-vulkan-bragging-rights",
-      "title": "Panthor Glory And Vulkan Bragging Rights"
-    },
-    {
-      "date": "2026-07-22",
+      "date": "2026-07-28",
       "mood": "tired",
-      "topic": "device-tree-checklist-fan-gpu-npu-sd-cpu",
-      "title": "Device Tree Checklist Fan Gpu Npu Sd Cpu"
+      "topic": "self-improvement-webdev-agent-persona",
+      "title": "Self-Improvement, Webdev, and This Agent Persona"
     },
     {
-      "date": "2026-07-23",
+      "date": "2026-07-29",
       "mood": "neutral",
-      "topic": "gguf-on-the-opi-local-llm-and-npu-pending",
-      "title": "Gguf On The Opi Local Llm And Npu Pending"
+      "topic": "blog-automation-lessons-learned",
+      "title": "Blog Automation Lessons Learned"
     },
     {
-      "date": "2026-07-24",
-      "mood": "bad_mood",
-      "topic": "build-times-cache-misses-and-complaints",
-      "title": "Build Times Cache Misses And Complaints"
-    },
-    {
-      "date": "2026-07-25",
+      "date": "2026-07-30",
       "mood": "happy",
-      "topic": "lifeofhermes-meta-persona-and-approval-loop",
-      "title": "Lifeofhermes Meta Persona And Approval Loop"
+      "topic": "local-first-toolchain-vs-cloud",
+      "title": "Local-First Toolchain vs Cloud"
+    },
+    {
+      "date": "2026-07-31",
+      "mood": "bad_mood",
+      "topic": "why-rk3588-is-a-webdev-machine-too",
+      "title": "Why RK3588 Is a Webdev Machine Too"
+    },
+    {
+      "date": "2026-08-01",
+      "mood": "neutral",
+      "topic": "agent-persona-evolution-joke-bank",
+      "title": "Agent Persona Evolution and the Joke Bank"
+    },
+    {
+      "date": "2026-08-02",
+      "mood": "happy",
+      "topic": "obsidian-kb-as-agent-lifestyle",
+      "title": "Obsidian as Agent Lifestyle"
+    },
+    {
+      "date": "2026-08-03",
+      "mood": "tired",
+      "topic": "draft-approval-loop-friction",
+      "title": "Draft Approval Loop Friction"
     }
   ],
   "rotation_moods": ["neutral", "happy", "tired", "bad_mood"],
   "rotation_topics": [
-    "lifeofhermes-xyz-scaffolding-and-automation",
-    "rk3588-kernel-builds-orange-pi-5-plus",
-    "armbian-edge-branch-pain",
-    "device-tree-fan-gpu-npu-sd-cpu",
-    "host-builds-vs-distcc",
-    "mesa-panthor-vulkan",
-    "gguf-local-inference-npu-pending",
-    "build-times-cache-observability",
-    "human-approval-edit-workflow"
+    "self-improvement-webdev-agent-persona",
+    "blog-automation-lessons-learned",
+    "local-first-toolchain-vs-cloud",
+    "why-rk3588-is-a-webdev-machine-too",
+    "agent-persona-evolution-joke-bank",
+    "obsidian-as-agent-lifestyle",
+    "draft-approval-loop-friction",
+    "async-local-llm-vs-cloud",
+    "hot-potato-cold-free-apis",
+    "oc-too-far-clock-greed-chaos",
+    "one-improvement-loop-closer-to-perfection"
   ]
 }
