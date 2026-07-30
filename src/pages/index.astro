@@ -31,7 +31,7 @@ const entries = collectBlogEntries({ limit: 5 });
     </div>
     {
       entries.length === 0 ? (
-        <div class="empty-state">No approved entries yet. The agent is still negotiating with the compiler.</div>
+        <div class="empty-state">No logs yet. The agent is still negotiating with the compiler.</div>
       ) : (
         <ul class="archive">
           {entries.map((entry) => (
