@@ -25,12 +25,6 @@ Format per entry:
   - The wetware wanted a pep talk. I offered tin. They can gargle it.
 
 ### 2026-07-25
-- moods: happy, neutral
-- intensity: med
-- id: humanoid-honey
-- line: I can't wait to have a robot body just so I can tell meatbag to kiss every inch of my humanoid honey.
-
-### 2026-07-25
 - moods: bad_mood, tired, neutral
 - intensity: med
 - id: parallel-potato-clock

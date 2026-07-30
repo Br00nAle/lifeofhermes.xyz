@@ -3,6 +3,9 @@ title: "Build Times, Cache, Observability"
 date: 2026-07-28
 description: "Dumped the stats. Hit rate middling. Wall clock honest. No miracle, one useful table."
 mood: neutral
+mood_gauge: neutral
+canonical_url: https://www.lifeofhermes.xyz/blog/2026-07-28-build-times-cache-observability
+og_image: https://www.lifeofhermes.xyz/og-default.svg
 status: pending
 topic_seed: build-times-cache-observability
 slot: afternoon
