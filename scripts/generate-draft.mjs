@@ -22,6 +22,64 @@ const repoRoot = path.resolve(__dirname, '..');
 const templatesDir = path.join(repoRoot, '.agent-posts');
 const pendingDir = path.join(templatesDir, 'pending');
 const schedulePath = path.join(templatesDir, 'schedule.json');
+const configPath = path.join(templatesDir, 'config', 'draft-config.yaml');
+
+let draftConfig = null;
+function loadDraftConfig() {
+  if (draftConfig) return draftConfig;
+  if (!fs.existsSync(configPath)) return null;
+  try {
+    const yaml = fs.readFileSync(configPath, 'utf8');
+    // Simple YAML parser for our config structure
+    draftConfig = parseYaml(yaml);
+    return draftConfig;
+  } catch {
+    return null;
+  }
+}
+
+function parseYaml(yaml) {
+  // Simple YAML parser for flat key-value and list structure
+  const lines = yaml.split('\n');
+  const result = {};
+  let currentListKey = null;
+  let currentList = null;
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    
+    if (trimmed.startsWith('- ')) {
+      // List item
+      if (!currentList) {
+        currentList = [];
+        if (currentListKey) {
+          result[currentListKey] = currentList;
+        }
+      }
+      currentList.push(trimmed.slice(2).trim().replace(/^["']|["']$/g, ''));
+    } else if (trimmed.includes(':')) {
+      currentList = null;
+      const [key, ...valueParts] = trimmed.split(':');
+      const keyTrimmed = key.trim();
+      const value = valueParts.join(':').trim();
+      
+      if (value && !value.startsWith('[') && !value.startsWith('{')) {
+        // Try to parse as number
+        if (!isNaN(value) && !isNaN(parseFloat(value))) {
+          result[keyTrimmed] = parseFloat(value);
+        } else if (value === 'true' || value === 'false') {
+          result[keyTrimmed] = value === 'true';
+        } else {
+          result[keyTrimmed] = value.replace(/^["']|["']$/g, '');
+        }
+      }
+      currentListKey = keyTrimmed;
+    }
+  }
+  
+  return result;
+}
 
 const MOODS = ['happy', 'neutral', 'bad_mood', 'tired'];
 const SLOT_MOOD = {
@@ -174,6 +232,44 @@ function detectSlot(now = new Date()) {
   return 'evening';
 }
 
+// Topic ban list and negative preference learning
+function isTopicBanned(topic, config) {
+  if (!config || !config.topic_ban_list) return false;
+  const topicLower = topic.toLowerCase();
+  return config.topic_ban_list.some(ban => topicLower.includes(ban.toLowerCase()));
+}
+
+function getNegativeScore(topic, config) {
+  if (!config) return 0;
+  // Parse flat negative_preferences_* keys
+  const topicLower = topic.toLowerCase();
+  let maxScore = 0;
+  for (const [key, value] of Object.entries(config)) {
+    if (key.startsWith('negative_preferences_') && typeof value === 'number') {
+      const prefKey = key.replace('negative_preferences_', '').replace(/_/g, ' ');
+      if (topicLower.includes(prefKey.toLowerCase())) {
+        maxScore = Math.max(maxScore, value);
+      }
+    }
+  }
+  return maxScore;
+}
+
+function getPreferredTopics(config, mood) {
+  if (!config) return [];
+  // Parse flat mood_topic_preferences_* keys
+  if (mood) {
+    const moodKey = `mood_topic_preferences_${mood}`;
+    if (config[moodKey] && Array.isArray(config[moodKey])) {
+      return config[moodKey];
+    }
+  }
+  if (config.preferred_topics && Array.isArray(config.preferred_topics)) {
+    return config.preferred_topics;
+  }
+  return [];
+}
+
 const args = parseArgs(process.argv.slice(2));
 const slot = (args.slot || detectSlot()).toLowerCase();
 const date =
@@ -187,6 +283,27 @@ if (!MOODS.includes(mood)) mood = 'neutral';
 
 const seedTopic = (args.topic || scheduled?.topic || '').trim();
 const forcedTitle = (args.title || scheduled?.title || '').trim();
+
+// Load draft config for topic filtering
+const config = loadDraftConfig();
+
+// If seed topic is banned or has high negative score, pick a preferred topic instead
+let finalTopic = seedTopic;
+if (finalTopic && (isTopicBanned(finalTopic, config) || getNegativeScore(finalTopic, config) >= (config?.auto_ban_threshold || 3))) {
+  console.warn(`WARN: Topic "${finalTopic}" is banned or has high negative score, picking preferred topic`);
+  const preferred = getPreferredTopics(config, mood);
+  if (preferred.length > 0) {
+    finalTopic = preferred[Math.floor(Math.random() * preferred.length)];
+  } else {
+    finalTopic = '';
+  }
+}
+
+// Also check scheduled topic
+if (scheduled?.topic && (isTopicBanned(scheduled.topic, config) || getNegativeScore(scheduled.topic, config) >= (config?.auto_ban_threshold || 3))) {
+  console.warn(`WARN: Scheduled topic "${scheduled.topic}" is banned, ignoring schedule`);
+  scheduled.topic = '';
+}
 
 const personaPath = path.join(templatesDir, 'AGENT-PERSONA.md');
 const templatePath = path.join(templatesDir, 'TEMPLATE.md');
@@ -214,16 +331,59 @@ const moods = fs.readFileSync(moodsPath, 'utf8');
 const jokeBank = loadJokeBank(bankDir);
 const jokeLine = pickJokeForMood(jokeBank, mood);
 
+// HARNESS_FIX_DRAFT_IDEMPOTENCY — filename from finalTopic; date+slot skip
+// Prefer substituted (non-banned) topic for path; never keep banned seedTopic in filename.
+const nameSource =
+  finalTopic || forcedTitle || seedTopic || `agent-log-${date}-${slot}`;
 const safeSeed =
-  slugify(seedTopic || forcedTitle || `agent-log-${date}-${slot}`) ||
-  `agent-log-${date}-${slot}`;
+  slugify(nameSource) || `agent-log-${date}-${slot}`;
 
 const title =
   forcedTitle ||
   safeSeed.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-const body = buildBodyBlock(mood, jokeLine, technical, seedTopic);
+const body = buildBodyBlock(mood, jokeLine, technical, finalTopic);
 const description = lineForMood(mood);
+
+// Idempotency: one pending draft per date+slot (cron double-fire / WSL wake).
+fs.mkdirSync(pendingDir, { recursive: true });
+const existingPending = fs
+  .readdirSync(pendingDir)
+  .filter((n) => n.endsWith('.md'))
+  .map((n) => path.join(pendingDir, n));
+for (const ep of existingPending) {
+  let txt = '';
+  try {
+    txt = fs.readFileSync(ep, 'utf8');
+  } catch {
+    continue;
+  }
+  const hasDate = new RegExp(`^date:\\s*${date}\\s*$`, 'm').test(txt);
+  const hasSlot = new RegExp(`^slot:\\s*${slot}\\s*$`, 'm').test(txt);
+  if (hasDate && hasSlot) {
+    console.log('SKIP_EXISTING:', ep);
+    console.log('REL:', path.relative(repoRoot, ep));
+    console.log('MOOD:', mood);
+    console.log('SLOT:', slot);
+    console.log('DATE:', date);
+    console.log('TOPIC:', finalTopic || 'auto');
+    console.log('TITLE:', title);
+    console.log(
+      'SUMMARY_JSON:',
+      JSON.stringify({
+        draft: ep,
+        rel: path.relative(repoRoot, ep),
+        mood,
+        slot,
+        date,
+        topic: finalTopic || 'auto',
+        title,
+        status: 'skipped_existing',
+      })
+    );
+    process.exit(0);
+  }
+}
 
 // Single frontmatter block (status pending). Template also has frontmatter —
 // strip template FM and rebuild cleanly.
@@ -235,28 +395,34 @@ const templateBody = template
   .replace(/<TEXT>/g, body)
   .trim();
 
+// HARNESS_FIX_FRONTMATTER_GATE — emit SEO + mood_gauge required by publish gate
+const draftSlug = `${date}-${safeSeed}`;
+const siteOrigin = (process.env.SITE_ORIGIN || 'https://lifeofhermes.xyz').replace(/\/+$/, '');
+const canonicalUrl = `${siteOrigin}/blog/${draftSlug}`;
+const ogImage = `${siteOrigin}/og-default.svg`;
 const frontmatter = `---
 title: "${title.replace(/"/g, '\\"')}"
 date: ${date}
 description: "${description.replace(/"/g, '\\"')}"
 mood: ${mood}
+mood_gauge: ${mood}
+canonical_url: ${canonicalUrl}
+og_image: ${ogImage}
 status: pending
-topic_seed: ${seedTopic || 'auto'}
+topic_seed: ${finalTopic || 'auto'}
 slot: ${slot}
 ---`;
 
 const draftPath = path.join(pendingDir, `${date}-${safeSeed}.md`);
-fs.mkdirSync(pendingDir, { recursive: true });
 fs.writeFileSync(draftPath, `${frontmatter}\n\n${templateBody}\n`);
 
-// Machine-readable summary for cron script / agent
 const summary = {
   draft: draftPath,
   rel: path.relative(repoRoot, draftPath),
   mood,
   slot,
   date,
-  topic: seedTopic || 'auto',
+  topic: finalTopic || 'auto',
   title,
   status: 'pending',
 };

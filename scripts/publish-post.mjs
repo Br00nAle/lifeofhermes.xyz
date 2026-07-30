@@ -24,7 +24,10 @@ import {
   buildPostAstro,
   postSlug,
   parseMarkdown,
+  validateRequiredFrontmatter,
+  ensureDerivedFrontmatter,
 } from './lib/md.mjs';
+// HARNESS_FIX_FRONTMATTER_GATE
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -137,6 +140,45 @@ function publishOne(srcPath) {
 
   const preferredBase = path.basename(srcPath, '.md').replace(/\.publishing$/, '');
   let raw = fs.readFileSync(srcPath, 'utf8');
+  // HARNESS_FIX_FRONTMATTER_GATE — schema-check before approve write
+  {
+    const { front } = parseMarkdown(raw);
+    const site = (process.env.SITE_ORIGIN || 'https://lifeofhermes.xyz').replace(
+      /\/+$/,
+      ''
+    );
+    let filled;
+    try {
+      filled = validateRequiredFrontmatter(front, {
+        slug: preferredBase,
+        site,
+        fill: true,
+      });
+    } catch (err) {
+      console.error(String(err && err.message ? err.message : err));
+      process.exitCode = 1;
+      return null;
+    }
+    // Rewrite raw frontmatter with derived fields so stored post is complete
+    const { body: bodyOnly } = parseMarkdown(raw);
+    const esc = (s) => String(s).replace(/"/g, '\\"');
+    raw = `---
+title: "${esc(filled.title)}"
+date: ${String(filled.date).slice(0, 10)}
+description: "${esc(filled.description)}"
+mood: ${filled.mood}
+mood_gauge: ${filled.mood_gauge || filled.mood}
+canonical_url: ${filled.canonical_url}
+og_image: ${filled.og_image}
+status: pending
+topic_seed: ${filled.topic_seed || front.topic_seed || 'auto'}
+slot: ${filled.slot || front.slot || ''}
+time: ${filled.time || front.time || ''}
+---
+
+${bodyOnly.trim()}
+`;
+  }
   raw = setStatusApproved(raw);
 
   const post = parsePostText(raw, preferredBase);
@@ -147,11 +189,33 @@ function publishOne(srcPath) {
   const body = post.body.trim();
   const slotLine = post.slot ? `slot: ${post.slot}\n` : '';
   const timeLine = post.time ? `time: ${post.time}\n` : '';
+  const siteOrigin = (process.env.SITE_ORIGIN || 'https://lifeofhermes.xyz').replace(
+    /\/+$/,
+    ''
+  );
+  const derived = ensureDerivedFrontmatter(
+    {
+      title: post.title,
+      date: post.date,
+      description: post.description,
+      mood: post.mood,
+      topic_seed: post.topic_seed || 'auto',
+      slot: post.slot || '',
+      time: post.time || '',
+      canonical_url: post.front?.canonical_url || '',
+      og_image: post.front?.og_image || '',
+      mood_gauge: post.front?.mood_gauge || post.mood,
+    },
+    { slug, site: siteOrigin }
+  );
   const stored = `---
 title: "${post.title.replace(/"/g, '\\"')}"
 date: ${post.date}
 description: "${post.description.replace(/"/g, '\\"')}"
 mood: ${post.mood}
+mood_gauge: ${derived.mood_gauge || post.mood}
+canonical_url: ${derived.canonical_url}
+og_image: ${derived.og_image}
 status: approved
 topic_seed: ${post.topic_seed || 'auto'}
 ${slotLine}${timeLine}---

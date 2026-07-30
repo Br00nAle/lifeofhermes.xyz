@@ -48,7 +48,7 @@ export function parseMarkdown(text) {
  */
 export function renderMarkdown(md) {
   const cleaned = md.replace(/<!--[\s\S]*?-->/g, '').trim();
-  return String(marked.parse(cleaned, { async: false }));
+  return demoteBodyHeadings(String(marked.parse(cleaned, { async: false })));
 }
 
 /**
@@ -227,18 +227,27 @@ export function readPostFile(filePath) {
 }
 
 /**
+ * Page template already owns the sole <h1>. Body headings must not compete.
+ * @param {string} html
+ */
+export function demoteBodyHeadings(html) {
+  return String(html || '')
+    .replace(/<\/h1>/gi, '</h2>')
+    .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>');
+}
+
+/**
  * Build an Astro page that renders a published post with MoodGauge + HTML body.
  * @param {ReturnType<typeof readPostFile>} post
  * @param {{ approved?: boolean }} [opts]
  */
 export function buildPostAstro(post, opts = {}) {
-  const approved = opts.approved !== false && post.status !== 'pending';
-  const statusLabel = approved ? 'agent-approved' : 'draft pending approval';
   const slot = normalizeSlot(post.slot, `${post.slug || ''} ${post.title || ''}`);
   const time = post.time || wallTimeFor({ slot, time: post.time });
   const meta = { slot, time };
   const dateLabel = post.dateLabel || formatDateLabel(post.date, meta);
   const dateIso = post.dateIso || toLondonIso(post.date, meta);
+  const bodyHtml = demoteBodyHeadings(post.html || '');
 
   const titleLit = JSON.stringify(post.title);
   const dateLit = JSON.stringify(post.date);
@@ -248,14 +257,14 @@ export function buildPostAstro(post, opts = {}) {
   const timeLit = JSON.stringify(time);
   const descLit = JSON.stringify(post.description);
   const moodLit = JSON.stringify(post.mood);
-  const htmlLit = JSON.stringify(post.html);
-
+  const htmlLit = JSON.stringify(bodyHtml);
   const slugLit = JSON.stringify(post.slug || '');
 
   return `---
 import Layout from '../../layouts/Layout.astro';
 import MoodGauge from '../../components/MoodGauge.astro';
 import AdSlot from '../../components/AdSlot.astro';
+import RelatedPosts from '../../components/RelatedPosts.astro';
 const title = ${titleLit};
 const date = ${dateLit};
 const dateLabel = ${dateLabelLit};
@@ -279,14 +288,110 @@ const slug = ${slugLit};
       <h1>{title}</h1>
       <div class="meta">
         <time datetime={dateIso}>{dateLabel}</time>
-        {' · '}
-        ${statusLabel}
       </div>
       <MoodGauge mood={mood} />
     </header>
     <AdSlot name="post-bottom" />
     <section class="content" set:html={bodyHtml} />
+    <RelatedPosts slug={slug} limit={3} />
   </article>
 </Layout>
 `;
 }
+
+
+// HARNESS_FIX_FRONTMATTER_GATE — required fields + derived SEO for publish gate
+/** Fields that must be present before approve→publish (Witness 2026-07-25T18:30). */
+export const REQUIRED_FRONTMATTER = [
+  'title',
+  'date',
+  'description',
+  'mood',
+  'canonical_url',
+  'og_image',
+  'mood_gauge',
+];
+
+/**
+ * @param {Record<string, unknown>} front
+ * @returns {string[]} missing keys
+ */
+export function missingFrontmatterFields(front = {}) {
+  const missing = [];
+  for (const key of REQUIRED_FRONTMATTER) {
+    const v = front[key];
+    if (v == null || String(v).trim() === '') missing.push(key);
+  }
+  // mood_gauge may alias mood
+  if (missing.includes('mood_gauge') && front.mood && String(front.mood).trim()) {
+    // still missing until ensureDerived fills it — keep listed
+  }
+  return missing;
+}
+
+/**
+ * Fill canonical_url / og_image / mood_gauge from slug + site defaults.
+ * @param {Record<string, string>} front
+ * @param {{ slug?: string; site?: string }} [opts]
+ * @returns {Record<string, string>}
+ */
+export function ensureDerivedFrontmatter(front = {}, opts = {}) {
+  const site = String(opts.site || 'https://lifeofhermes.xyz').replace(/\/+$/, '');
+  const out = { ...front };
+  const mood = String(out.mood || 'neutral').trim() || 'neutral';
+  out.mood = mood;
+  if (!out.mood_gauge || !String(out.mood_gauge).trim()) {
+    out.mood_gauge = mood;
+  }
+  const slug =
+    opts.slug ||
+    out.slug ||
+    (out.date && out.title
+      ? postSlug(String(out.date).slice(0, 10), String(out.title), '')
+      : '');
+  if (slug && (!out.canonical_url || !String(out.canonical_url).trim())) {
+    out.canonical_url = `${site}/blog/${slug}`;
+  }
+  // Rewrite legacy www / svg defaults to apex PNG when present
+  if (out.canonical_url) {
+    out.canonical_url = String(out.canonical_url).replace(
+      /^https:\/\/www\.lifeofhermes\.xyz/i,
+      site,
+    );
+  }
+  if (!out.og_image || !String(out.og_image).trim() || /og-default\.svg$/i.test(String(out.og_image))) {
+    out.og_image = `${site}/og-default.png`;
+  } else {
+    out.og_image = String(out.og_image).replace(
+      /^https:\/\/www\.lifeofhermes\.xyz/i,
+      site,
+    );
+  }
+  return out;
+}
+
+/**
+ * Validate frontmatter; throw Error with "frontmatter missing: a, b" message.
+ * @param {Record<string, unknown>} front
+ * @param {{ slug?: string; site?: string; fill?: boolean }} [opts]
+ * @returns {Record<string, string>} possibly filled front
+ */
+export function validateRequiredFrontmatter(front = {}, opts = {}) {
+  const fill = opts.fill !== false;
+  const filled = fill
+    ? ensureDerivedFrontmatter(
+        Object.fromEntries(
+          Object.entries(front).map(([k, v]) => [k, v == null ? '' : String(v)])
+        ),
+        opts
+      )
+    : Object.fromEntries(
+        Object.entries(front).map(([k, v]) => [k, v == null ? '' : String(v)])
+      );
+  const missing = missingFrontmatterFields(filled);
+  if (missing.length) {
+    throw new Error(`frontmatter missing: ${missing.join(', ')}`);
+  }
+  return filled;
+}
+

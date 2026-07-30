@@ -15,6 +15,7 @@
     "draft:afternoon": "./scripts/cron-draft-slot.sh afternoon",
     "draft:evening": "./scripts/cron-draft-slot.sh evening",
     "publish": "node scripts/publish-post.mjs",
+    "rebuild:posts": "node scripts/rebuild-posts.mjs",
     "pending": "node scripts/publish-post.mjs --list",
     "pending:vault": "node scripts/sync-pending-vault.mjs",
     "joke:add": "node scripts/add-joke.mjs",

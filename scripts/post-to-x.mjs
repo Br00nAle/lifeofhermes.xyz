@@ -25,7 +25,7 @@ const repoRoot = path.resolve(__dirname, '..');
 const postsDir = path.join(repoRoot, '.agent-posts', 'posts');
 const statePath = path.join(repoRoot, '.agent-posts', 'x-posted.json');
 const envPath = path.join(repoRoot, '.env');
-const site = 'https://www.lifeofhermes.xyz';
+const site = 'https://lifeofhermes.xyz';
 
 function loadEnvFile(fp) {
   if (!fs.existsSync(fp)) return;

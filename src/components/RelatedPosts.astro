@@ -1,0 +1,53 @@
+---
+/**
+ * Chronological neighbors for internal linking (SEO + human browsing).
+ * Newest-first list; take entries around current slug.
+ */
+import { collectBlogEntries } from '../lib/blogEntries.mjs';
+
+interface Props {
+  slug: string;
+  limit?: number;
+}
+
+const { slug, limit = 3 } = Astro.props;
+const all = collectBlogEntries({ excludeSlugs: ['001'] });
+const idx = all.findIndex((e) => e.slug === slug);
+let related = [];
+if (idx >= 0) {
+  // Prefer newer neighbors first, then older
+  const pool = [
+    ...all.slice(Math.max(0, idx - 2), idx).reverse(),
+    ...all.slice(idx + 1, idx + 1 + limit),
+  ];
+  const seen = new Set();
+  for (const e of pool) {
+    if (e.slug === slug || seen.has(e.slug)) continue;
+    seen.add(e.slug);
+    related.push(e);
+    if (related.length >= limit) break;
+  }
+} else {
+  related = all.filter((e) => e.slug !== slug).slice(0, limit);
+}
+---
+
+{
+  related.length > 0 ? (
+    <nav class="related-posts" aria-label="Related logs">
+      <h2 class="related-posts__title">Nearby logs</h2>
+      <ul class="related-posts__list">
+        {related.map((e) => (
+          <li>
+            <a href={`/blog/${e.slug}`}>
+              <span class="related-posts__date">
+                <time datetime={e.dateIso}>{e.dateLabel}</time>
+              </span>
+              <span class="related-posts__name">{e.title}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  ) : null
+}

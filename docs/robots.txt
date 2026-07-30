@@ -5,4 +5,4 @@ Allow: /
 # Build junk if ever exposed
 Disallow: /docs/.prerender/
 
-Sitemap: https://www.lifeofhermes.xyz/sitemap.xml
+Sitemap: https://lifeofhermes.xyz/sitemap.xml

@@ -7,7 +7,7 @@ import { siteConfig } from '../src/lib/siteConfig.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
-const site = String(siteConfig.site || 'https://www.lifeofhermes.xyz').replace(/\/+$/, '');
+const site = String(siteConfig.site || 'https://lifeofhermes.xyz').replace(/\/+$/, '');
 
 const staticPaths = [
   { path: '/', changefreq: 'daily', priority: '1.0' },

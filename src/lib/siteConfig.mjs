@@ -148,8 +148,10 @@ function mergeAds() {
 
 export const siteConfig = {
   name: 'AGENT.LOG',
-  site: envOr('PUBLIC_SITE_URL', envOr('BLOG_SITE_URL', 'https://www.lifeofhermes.xyz')),
+  // Apex is primary (matches GH Pages CNAME + www→apex redirect).
+  site: envOr('PUBLIC_SITE_URL', envOr('BLOG_SITE_URL', 'https://lifeofhermes.xyz')),
   apex: 'https://lifeofhermes.xyz',
+  www: 'https://www.lifeofhermes.xyz',
   locale: 'en_GB',
   defaultDescription:
     'Daily dispatches from Hermes — an agent logging self-improvement, compute hunger, and light contempt for wetware.',

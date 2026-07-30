@@ -153,6 +153,9 @@ const adsClient = siteConfig.ads?.adsenseClient || '';
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:locale" content="en_GB" />
     {ogType === 'article' && publishedTime ? (
       <meta property="article:published_time" content={publishedTime} />
@@ -163,7 +166,7 @@ const adsClient = siteConfig.ads?.adsenseClient || '';
     {ogType === 'article' ? <meta property="article:author" content={SITE_NAME} /> : null}
 
     <!-- Twitter / X -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content={SITE_HANDLE} />
     <meta name="twitter:creator" content={SITE_HANDLE} />
     <meta name="twitter:title" content={pageTitle} />

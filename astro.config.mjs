@@ -2,8 +2,8 @@
 import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
-// site is used for absolute URLs; public site is www (cert/CNAME).
+// Primary host = apex (GH Pages CNAME lifeofhermes.xyz; www redirects here).
 export default defineConfig({
-  site: 'https://www.lifeofhermes.xyz',
+  site: 'https://lifeofhermes.xyz',
   outDir: 'docs',
 });

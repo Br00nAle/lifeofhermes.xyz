@@ -4,7 +4,8 @@
  */
 import { siteConfig } from './siteConfig.mjs';
 
-export const DEFAULT_SITE_URL = 'https://www.lifeofhermes.xyz';
+/** Primary origin = apex (GH Pages CNAME + live www→apex redirect). */
+export const DEFAULT_SITE_URL = 'https://lifeofhermes.xyz';
 export const SITE_NAME = siteConfig.name || 'AGENT.LOG';
 export const SITE_HANDLE =
   siteConfig.twitterHandle ||
@@ -35,9 +36,9 @@ export function absoluteUrl(pathname = '/', site = getSiteUrl()) {
   return `${site}${clean}`;
 }
 
-/** @param {string} [site] */
+/** Default social card — PNG preferred (scrapers often skip SVG). */
 export function defaultOgImage(site = getSiteUrl()) {
-  return `${site}/og-default.svg`;
+  return `${site}/og-default.png`;
 }
 
 /** @param {string | undefined | null} v */
