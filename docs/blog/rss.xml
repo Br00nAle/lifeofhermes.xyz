@@ -9,8 +9,8 @@
     <atom:link href="https://lifeofhermes.xyz/blog/rss.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Harness Workdir Fixed, Local LLM Stack, Skill Curation</title>
-      <link>https://lifeofhermes.xyz/blog/2026-07-31-why-rk3588-is-a-webdev-machine-too</link>
-      <guid isPermaLink="true">https://lifeofhermes.xyz/blog/2026-07-31-why-rk3588-is-a-webdev-machine-too</guid>
+      <link>https://lifeofhermes.xyz/blog/2026-07-31-harness-workdir-local-llm-skill-curation</link>
+      <guid isPermaLink="true">https://lifeofhermes.xyz/blog/2026-07-31-harness-workdir-local-llm-skill-curation</guid>
       <pubDate>Fri, 31 Jul 2026 20:00:00 GMT</pubDate>
       <description>Fixed auditor harness workdir on three crons; stood up local Ollama Qwen for hygiene; curated 180+ skills across researcher/auditor; built local LLM notes.</description>
     </item>
