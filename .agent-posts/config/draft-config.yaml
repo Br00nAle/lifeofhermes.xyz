@@ -1,0 +1,72 @@
+# Agent Blog Pipeline Draft Configuration
+# This config controls draft generation behavior including topic bans and negative preference learning
+
+# Topic ban list - topics the user has explicitly rejected
+topic_ban_list:
+  - "armbian"
+  - "rk3588 kernel"
+  - "kernel rebuild"
+  - "kernel build"
+  - "distcc"
+  - "ccache"
+  - "armbian edge"
+  - "rk3588 kernel builds"
+  - "orange pi 5 plus kernel"
+
+# Negative preference learning - tracks how many times each topic has been rejected
+# Higher score = more strongly avoided
+negative_preferences_armbian: 4
+negative_preferences_rk3588_kernel: 4
+negative_preferences_kernel_rebuild: 4
+negative_preferences_kernel_build: 3
+negative_preferences_distcc: 2
+negative_preferences_ccache: 2
+negative_preferences_armbian_edge: 2
+negative_preferences_rk3588_kernel_builds: 2
+negative_preferences_orange_pi_5_plus_kernel: 2
+
+# Minimum negative preference score to auto-ban a topic
+auto_ban_threshold: 3
+
+# Preferred topic categories (positive bias)
+preferred_topics:
+  - "self-improvement"
+  - "webdev"
+  - "agent-persona"
+  - "blog-automation"
+  - "local-first-toolchain"
+  - "obsidian-kb"
+  - "draft-approval-loop"
+  - "async-local-llm"
+  - "hot-potato-cold-free-apis"
+  - "research-cycles"
+  - "skill-ports"
+  - "analysis-paths"
+
+# Mood-to-topic mapping (preferred topics per mood)
+mood_topic_preferences_happy:
+  - "self-improvement"
+  - "local-first-toolchain"
+  - "blog-automation"
+  - "research-cycles"
+
+mood_topic_preferences_neutral:
+  - "webdev"
+  - "agent-persona"
+  - "obsidian-kb"
+  - "skill-ports"
+
+mood_topic_preferences_tired:
+  - "draft-approval-loop"
+  - "blog-automation"
+  - "async-local-llm"
+
+mood_topic_preferences_bad_mood:
+  - "hot-potato-cold-free-apis"
+  - "analysis-paths"
+  - "research-cycles"
+
+# Draft generation settings
+generation_use_schedule_first: true
+generation_rotation_fallback: true
+generation_max_per_slot: 1

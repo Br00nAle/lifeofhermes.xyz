@@ -34,6 +34,16 @@ case "$SLOT" in
     ;;
 esac
 
+# HARNESS_FIX_DRAFT_IDEMPOTENCY — serialize slot runs (cron double-fire / sleep wake)
+LOCK_DIR="${XDG_RUNTIME_DIR:-/tmp}/agent-blog-draft-locks"
+mkdir -p "$LOCK_DIR"
+LOCK_FILE="$LOCK_DIR/slot-${SLOT}.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo "SKIP: another draft runner holds $LOCK_FILE for slot=$SLOT"
+  exit 0
+fi
+
 echo "=== AGENT.LOG draft slot runner ==="
 echo "REPO: $REPO_ROOT"
 echo "SLOT: $SLOT"
