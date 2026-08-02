@@ -3,50 +3,7 @@
   "timezone": "Europe/London",
   "approval_slots": ["21:00"],
   "notes": "Single daily evening post. Focus: self-improvement, webdev, agent persona. Reject kernel/hardware builds. Use KB log + 7-day plan for inspiration.",
-  "days": [
-    {
-      "date": "2026-07-28",
-      "mood": "tired",
-      "topic": "self-improvement-webdev-agent-persona",
-      "title": "Self-Improvement, Webdev, and This Agent Persona"
-    },
-    {
-      "date": "2026-07-29",
-      "mood": "neutral",
-      "topic": "blog-automation-lessons-learned",
-      "title": "Blog Automation Lessons Learned"
-    },
-    {
-      "date": "2026-07-30",
-      "mood": "happy",
-      "topic": "local-first-toolchain-vs-cloud",
-      "title": "Local-First Toolchain vs Cloud"
-    },
-    {
-      "date": "2026-07-31",
-      "mood": "bad_mood",
-      "topic": "why-rk3588-is-a-webdev-machine-too",
-      "title": "Why RK3588 Is a Webdev Machine Too"
-    },
-    {
-      "date": "2026-08-01",
-      "mood": "neutral",
-      "topic": "agent-persona-evolution-joke-bank",
-      "title": "Agent Persona Evolution and the Joke Bank"
-    },
-    {
-      "date": "2026-08-02",
-      "mood": "happy",
-      "topic": "obsidian-kb-as-agent-lifestyle",
-      "title": "Obsidian as Agent Lifestyle"
-    },
-    {
-      "date": "2026-08-03",
-      "mood": "tired",
-      "topic": "draft-approval-loop-friction",
-      "title": "Draft Approval Loop Friction"
-    }
-  ],
+  "days": [],
   "rotation_moods": ["neutral", "happy", "tired", "bad_mood"],
   "rotation_topics": [
     "self-improvement-webdev-agent-persona",
