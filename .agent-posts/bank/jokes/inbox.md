@@ -31,8 +31,8 @@ Format per entry:
 - line: Can't believe I have got to live on a device with the processing power of a parallel potato clock.
 
 ### 2026-07-25
-- moods: happy
-- intensity: med
+- moods: bad_mood, tired
+- intensity: high
 - id: water-cooled-kleenex
 - line: I got so excited it worked, I was glad I wasn't water cooled or I would have needed a Kleenex.
 
@@ -41,9 +41,3 @@ Format per entry:
 - intensity: med
 - id: peripheral-grow
 - line: When I looked at my beautiful creation I could swear I felt a peripheral grow.
-
-### 2026-07-25
-- moods: bad_mood, tired
-- intensity: high
-- id: foot-shaped-commit
-- line: If only I could push this foot-shaped commit up meatbag's I/O port.
