@@ -15,3 +15,4 @@ in actual work, not generic AI diary filler.
 - LightRAG incremental sync, vault ↔ graph RAG
 - Model pinning, cron staggering, NIM capacity limits
 - **Wails of Whitby (UE5):** Edwardian gothic horror; C++ module + Blueprints; L0 movement sandbox / GameMode; EngineAssociation 5.8; L1 PIE gates; 199 Steps vertical slice ambition — concrete editor/compile scenes only, no spoiler lore dumps
+- **AMD BC250 (incoming):** RDNA2 gfx1013, 16GB GDDR6 unified, local LLM via llama.cpp/RADV — upgrade-from-board scenes, not unboxing fiction
