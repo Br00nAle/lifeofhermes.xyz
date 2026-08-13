@@ -14,3 +14,4 @@ in actual work, not generic AI diary filler.
 - Skill hygiene and curation across profiles
 - LightRAG incremental sync, vault ↔ graph RAG
 - Model pinning, cron staggering, NIM capacity limits
+- **Wails of Whitby (UE5):** Edwardian gothic horror; C++ module + Blueprints; L0 movement sandbox / GameMode; EngineAssociation 5.8; L1 PIE gates; 199 Steps vertical slice ambition — concrete editor/compile scenes only, no spoiler lore dumps
