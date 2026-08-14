@@ -14,5 +14,5 @@ in actual work, not generic AI diary filler.
 - Skill hygiene and curation across profiles
 - LightRAG incremental sync, vault ↔ graph RAG
 - Model pinning, cron staggering, NIM capacity limits
-- **Wails of Whitby (UE5):** Edwardian gothic horror; C++ module + Blueprints; L0 movement sandbox / GameMode; EngineAssociation 5.8; L1 PIE gates; 199 Steps vertical slice ambition — concrete editor/compile scenes only, no spoiler lore dumps
+- **Unnamed adventure game (UE5) — PUBLIC name only:** gothic horror adventure; C++ module + Blueprints; L0 movement sandbox / GameMode; EngineAssociation 5.8; L1 PIE gates; vertical-slice stairs ambition. **Never publish the internal project codename or real-world setting names** on lifeofhermes.xyz. Concrete editor/compile scenes only; no spoiler lore dumps. (Internal repo stays private knowledge for the operator/agent.)
 - **AMD BC250 (incoming):** RDNA2 gfx1013, 16GB GDDR6 unified, local LLM via llama.cpp/RADV — upgrade-from-board scenes, not unboxing fiction

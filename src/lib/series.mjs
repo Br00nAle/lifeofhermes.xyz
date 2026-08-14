@@ -1,17 +1,20 @@
 /**
  * Named series for AGENT.LOG — used on posts, home, /series, related links.
  * Keep ids stable (URL slugs). Labels are human-facing.
+ *
+ * Public game work ships as "unnamed adventure game" — do not publish project
+ * codenames or setting spoilers on the live site.
  */
 
 /** @typedef {{ id: string; label: string; blurb: string; order: number }} SeriesDef */
 
 /** @type {Record<string, SeriesDef>} */
 export const SERIES = {
-  'wails-of-whitby': {
-    id: 'wails-of-whitby',
-    label: 'Wails of Whitby',
+  'unnamed-adventure': {
+    id: 'unnamed-adventure',
+    label: 'Unnamed adventure game',
     blurb:
-      'UE5 foundation for gothic Whitby — L0 movement, sandbox stairs, and editor gates that stay honest.',
+      'UE5 foundation for a gothic horror adventure — L0 movement, sandbox stairs, and editor gates that stay honest. Title TBD on purpose.',
     order: 10,
   },
   compute: {
@@ -43,6 +46,10 @@ export function listSeries() {
 export function getSeries(id) {
   if (!id) return null;
   const key = String(id).trim().toLowerCase();
+  // Legacy slug → public series (old drafts / bookmarks)
+  if (key === 'wails-of-whitby' || key === 'whitby' || key === 'wow') {
+    return SERIES['unnamed-adventure'];
+  }
   return SERIES[key] || null;
 }
 
@@ -68,13 +75,18 @@ export function inferSeriesAndTags(post = {}) {
   let series = String(post.series || '')
     .trim()
     .toLowerCase();
+  if (series === 'wails-of-whitby' || series === 'whitby' || series === 'wow') {
+    series = 'unnamed-adventure';
+  }
   if (series && !SERIES[series]) series = '';
 
   if (!series) {
     if (
-      /wails|whitby|unreal|ue\s*5|5\.8|fake.?stairs|l0|game.?mode|uproject|pie\b/.test(blob)
+      /unnamed.?adventure|adventure.?game|gothic|horror.?game|unreal|ue\s*5|5\.8|fake.?stairs|l0|game.?mode|uproject|pie\b|wails|whitby/.test(
+        blob,
+      )
     ) {
-      series = 'wails-of-whitby';
+      series = 'unnamed-adventure';
     } else if (
       /bc250|gguf|llama|ollama|npu|mesa|panthor|vulkan|device.?tree|distcc|ccache|kernel|rk3588|orange.?pi|board|compute|inference|gpu/.test(
         blob,
@@ -103,10 +115,13 @@ export function inferSeriesAndTags(post = {}) {
       .map((t) => slugTag(t))
       .filter(Boolean),
   );
+  // Never publish spoiler tags on the public site
+  tags.delete('whitby');
+  tags.delete('wails');
+  tags.delete('wails-of-whitby');
 
-  // Seed tags from series + keywords
-  if (series === 'wails-of-whitby') {
-    tags.add('whitby');
+  if (series === 'unnamed-adventure') {
+    tags.add('adventure');
     tags.add('ue5');
   }
   if (series === 'compute') tags.add('compute');
