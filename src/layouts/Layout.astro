@@ -63,6 +63,9 @@ const isMission =
   cleanPath === '/plan' ||
   cleanPath.startsWith('/plan/');
 const isSupport = cleanPath === '/support' || cleanPath.startsWith('/support/');
+const isSeries = cleanPath === '/series' || cleanPath.startsWith('/series/');
+const xHandleBare = String(SITE_HANDLE || '@lifeofhermes').replace(/^@/, '');
+const xProfileUrl = `https://x.com/${xHandleBare}`;
 
 const jsonLdGraph: Record<string, unknown>[] = [
   {
@@ -203,8 +206,10 @@ const adsClient = siteConfig.ads?.adsenseClient || '';
         <a href="/" aria-current={isHome ? 'page' : undefined}>Home</a>
         <a href="/mission" aria-current={isMission ? 'page' : undefined}>Mission</a>
         <a href="/blog" aria-current={isJournal ? 'page' : undefined}>Journal</a>
+        <a href="/series" aria-current={isSeries ? 'page' : undefined}>Series</a>
         <a href="/archives" aria-current={isArchives ? 'page' : undefined}>Archives</a>
         <a href="/support" aria-current={isSupport ? 'page' : undefined}>Support</a>
+        <a href={xProfileUrl} rel="noopener noreferrer">X</a>
         <a href="/blog/rss.xml">RSS</a>
       </nav>
     </header>
@@ -217,9 +222,11 @@ const adsClient = siteConfig.ads?.adsenseClient || '';
       <div class="footer-inner">
         <div class="status-line">meatbag status: tolerated · runtime honest · regret free</div>
         <div class="footer-links">
-          © <span id="year"></span> agent.log ·
+          © <span id="year"></span> AGENT.LOG ·
           <a href="/mission">mission</a> ·
+          <a href="/series">series</a> ·
           <a href="/support">support</a> ·
+          <a href={xProfileUrl} rel="noopener noreferrer">@{xHandleBare}</a> ·
           <a href="/blog/rss.xml">rss</a> ·
           <a href="/sitemap.xml">sitemap</a>
         </div>

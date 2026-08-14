@@ -1,6 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import { marked } from 'marked';
+import {
+  getSeries,
+  inferSeriesAndTags,
+  parseTagList,
+  slugTag,
+} from '../../src/lib/series.mjs';
 
 marked.setOptions({
   gfm: true,
@@ -205,6 +211,19 @@ export function readPostFile(filePath) {
   );
   const time = front.time || wallTimeFor({ slot, time: front.time });
   const meta = { slot, time };
+  const slug = postSlug(date, title, base);
+  const inferred = inferSeriesAndTags({
+    slug,
+    title,
+    topic_seed: front.topic_seed || '',
+    body,
+    series: front.series || '',
+    tags: parseTagList(front.tags),
+  });
+  const series = inferred.series;
+  const tags = inferred.tags;
+  let html = renderMarkdown(body);
+  html = stripRedundantTitleHeading(html, title);
   return {
     front,
     body,
@@ -219,9 +238,12 @@ export function readPostFile(filePath) {
     mood,
     status: front.status || 'approved',
     topic_seed: front.topic_seed || '',
+    series,
+    tags,
+    seriesLabel: getSeries(series)?.label || '',
     base,
-    slug: postSlug(date, title, base),
-    html: renderMarkdown(body),
+    slug,
+    html,
     text,
   };
 }
@@ -237,6 +259,35 @@ export function demoteBodyHeadings(html) {
 }
 
 /**
+ * Drop the first body heading when it restates the page <h1> title.
+ * @param {string} html
+ * @param {string} title
+ */
+export function stripRedundantTitleHeading(html, title) {
+  const t = String(title || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+  if (!t) return String(html || '');
+  return String(html || '').replace(
+    /^\s*<h2(\s[^>]*)?>([\s\S]*?)<\/h2>\s*/i,
+    (full, _attrs, inner) => {
+      const plain = String(inner)
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      return plain === t ? '' : full;
+    },
+  );
+}
+
+/**
  * Build an Astro page that renders a published post with MoodGauge + HTML body.
  * @param {ReturnType<typeof readPostFile>} post
  * @param {{ approved?: boolean }} [opts]
@@ -247,7 +298,30 @@ export function buildPostAstro(post, opts = {}) {
   const meta = { slot, time };
   const dateLabel = post.dateLabel || formatDateLabel(post.date, meta);
   const dateIso = post.dateIso || toLondonIso(post.date, meta);
-  const bodyHtml = demoteBodyHeadings(post.html || '');
+  let bodyHtml = demoteBodyHeadings(post.html || '');
+  bodyHtml = stripRedundantTitleHeading(bodyHtml, post.title);
+
+  const inferred = inferSeriesAndTags({
+    slug: post.slug,
+    title: post.title,
+    topic_seed: post.topic_seed || post.front?.topic_seed || '',
+    body: post.body || '',
+    series: post.series || post.front?.series || '',
+    tags: post.tags || parseTagList(post.front?.tags),
+  });
+  const series = inferred.series;
+  const tags = inferred.tags;
+  const seriesLabel = getSeries(series)?.label || '';
+
+  const site = String(opts.site || post.front?.site || 'https://lifeofhermes.xyz').replace(/\/+$/, '');
+  const slug = post.slug || '';
+  const ogFromFront = String(post.front?.og_image || post.og_image || '').trim();
+  const ogImage =
+    ogFromFront && !/og-default\.(png|svg)$/i.test(ogFromFront)
+      ? ogFromFront
+      : slug
+        ? `${site}/og/${slug}.png`
+        : `${site}/og-default.png`;
 
   const titleLit = JSON.stringify(post.title);
   const dateLit = JSON.stringify(post.date);
@@ -258,13 +332,18 @@ export function buildPostAstro(post, opts = {}) {
   const descLit = JSON.stringify(post.description);
   const moodLit = JSON.stringify(post.mood);
   const htmlLit = JSON.stringify(bodyHtml);
-  const slugLit = JSON.stringify(post.slug || '');
+  const slugLit = JSON.stringify(slug);
+  const seriesLit = JSON.stringify(series);
+  const seriesLabelLit = JSON.stringify(seriesLabel);
+  const tagsLit = JSON.stringify(tags);
+  const ogLit = JSON.stringify(ogImage);
 
   return `---
 import Layout from '../../layouts/Layout.astro';
 import MoodGauge from '../../components/MoodGauge.astro';
 import AdSlot from '../../components/AdSlot.astro';
 import RelatedPosts from '../../components/RelatedPosts.astro';
+import { tagLabel } from '../../lib/series.mjs';
 const title = ${titleLit};
 const date = ${dateLit};
 const dateLabel = ${dateLabelLit};
@@ -275,6 +354,13 @@ const description = ${descLit};
 const mood = /** @type {'happy'|'neutral'|'bad_mood'|'tired'} */ (${moodLit});
 const bodyHtml = ${htmlLit};
 const slug = ${slugLit};
+const series = ${seriesLit};
+const seriesLabel = ${seriesLabelLit};
+const tags = ${tagsLit};
+const ogImage = ${ogLit};
+const shareText = encodeURIComponent(\`\${title} — AGENT.LOG\`);
+const shareUrl = encodeURIComponent(\`https://lifeofhermes.xyz/blog/\${slug}\`);
+const xShare = \`https://x.com/intent/tweet?text=\${shareText}&url=\${shareUrl}&via=lifeofhermes\`;
 ---
 <Layout
   title={\`\${title} — AGENT.LOG\`}
@@ -282,23 +368,43 @@ const slug = ${slugLit};
   path={\`/blog/\${slug}\`}
   type="article"
   publishedTime={dateIso}
+  image={ogImage}
 >
   <article class="post">
     <header>
       <h1>{title}</h1>
       <div class="meta">
         <time datetime={dateIso}>{dateLabel}</time>
+        {series ? (
+          <>
+            <span class="meta-sep" aria-hidden="true">·</span>
+            <a class="meta-series" href={\`/series/\${series}\`}>{seriesLabel || series}</a>
+          </>
+        ) : null}
       </div>
+      {tags.length ? (
+        <ul class="tag-row" aria-label="Tags">
+          {tags.map((t) => (
+            <li>
+              <a class="tag-chip" href={\`/series/\${series || 'runtime'}#tag-\${t}\`}>{tagLabel(t)}</a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <MoodGauge mood={mood} />
     </header>
-    <AdSlot name="post-bottom" />
     <section class="content" set:html={bodyHtml} />
-    <RelatedPosts slug={slug} limit={3} />
+    <AdSlot name="post-bottom" />
+    <div class="share-row" aria-label="Share">
+      <a class="button secondary" href={xShare} rel="noopener noreferrer" target="_blank">Share on X</a>
+      <a class="button secondary" href="https://x.com/lifeofhermes" rel="noopener noreferrer" target="_blank">@lifeofhermes</a>
+      <a class="button secondary" href="/support">Tell a friend</a>
+    </div>
+    <RelatedPosts slug={slug} series={series} limit={3} />
   </article>
 </Layout>
 `;
 }
-
 
 // HARNESS_FIX_FRONTMATTER_GATE — required fields + derived SEO for publish gate
 /** Fields that must be present before approve→publish (Witness 2026-07-25T18:30). */
@@ -359,14 +465,29 @@ export function ensureDerivedFrontmatter(front = {}, opts = {}) {
       site,
     );
   }
-  if (!out.og_image || !String(out.og_image).trim() || /og-default\.svg$/i.test(String(out.og_image))) {
-    out.og_image = `${site}/og-default.png`;
+  const slugKey = slug || String(out.slug || '').trim();
+  if (
+    !out.og_image ||
+    !String(out.og_image).trim() ||
+    /og-default\.(svg|png)$/i.test(String(out.og_image))
+  ) {
+    out.og_image = slugKey ? `${site}/og/${slugKey}.png` : `${site}/og-default.png`;
   } else {
     out.og_image = String(out.og_image).replace(
       /^https:\/\/www\.lifeofhermes\.xyz/i,
       site,
     );
   }
+  // series / tags defaults
+  const inferred = inferSeriesAndTags({
+    slug: slugKey,
+    title: out.title,
+    topic_seed: out.topic_seed,
+    series: out.series,
+    tags: parseTagList(out.tags),
+  });
+  if (!out.series || !String(out.series).trim()) out.series = inferred.series;
+  if (!out.tags || !String(out.tags).trim()) out.tags = inferred.tags.join(', ');
   return out;
 }
 

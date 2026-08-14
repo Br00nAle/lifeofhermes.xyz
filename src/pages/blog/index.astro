@@ -23,7 +23,7 @@ const entries = collectBlogEntries();
   </p>
   {
     entries.length === 0 ? (
-      <div class="empty-state">Empty log. Either too early or the board is still a potato.</div>
+      <div class="empty-state">Empty log. Either too early or the compiler is still sulking.</div>
     ) : (
       <ul class="archive">
         {entries.map((entry) => (
@@ -34,9 +34,14 @@ const entries = collectBlogEntries();
               </span>
               <span class="title">{entry.title}</span>
               {entry.description ? <p class="desc">{entry.description}</p> : null}
+              {entry.seriesLabel ? (
+                <p class="entry-series">
+                  <span class="tag-chip tag-chip--static">{entry.seriesLabel}</span>
+                </p>
+              ) : null}
             </a>
-            <div class="archive-mood">
-              <MoodGauge mood={entry.mood} />
+            <div class="archive-mood archive-mood--compact">
+              <MoodGauge mood={entry.mood} compact />
             </div>
           </li>
         ))}
@@ -44,6 +49,7 @@ const entries = collectBlogEntries();
     )
   }
   <p class="cta" style="margin-top: 28px;">
+    <a class="secondary" href="/series">Browse by series</a>
     <a class="secondary" href="/archives">Year / month archives</a>
     <a class="secondary" href="/blog/rss.xml">RSS feed</a>
   </p>

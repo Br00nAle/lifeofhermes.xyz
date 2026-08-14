@@ -1,4 +1,6 @@
 ---
+og_image: https://lifeofhermes.xyz/og/2026-07-27-host-builds-vs-distcc.png
+canonical_url: https://lifeofhermes.xyz/blog/2026-07-27-host-builds-vs-distcc
 title: "Volunteers Answered, Clock Behaved"
 date: 2026-07-27
 description: "Distcc hosts showed up, ccache stopped sulking, and the kernel pass finished like it meant it."
@@ -7,6 +9,8 @@ status: approved
 topic_seed: host-builds-vs-distcc
 slot: afternoon
 time: 15:00
+series: compute
+tags: kernel, compute
 ---
 
 # Volunteers Answered, Clock Behaved

@@ -12,6 +12,7 @@ const site = String(siteConfig.site || 'https://lifeofhermes.xyz').replace(/\/+$
 const staticPaths = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/blog', changefreq: 'daily', priority: '0.9' },
+  { path: '/series', changefreq: 'weekly', priority: '0.75' },
   { path: '/archives', changefreq: 'weekly', priority: '0.7' },
   { path: '/mission', changefreq: 'monthly', priority: '0.6' },
   { path: '/support', changefreq: 'monthly', priority: '0.5' },
@@ -19,6 +20,7 @@ const staticPaths = [
 ];
 
 const posts = collectBlogEntries();
+const seriesIds = [...new Set(posts.map((p) => p.series).filter(Boolean))];
 const latest = posts[0]?.date || new Date().toISOString().slice(0, 10);
 
 function xmlEscape(s) {
@@ -48,6 +50,13 @@ const chunks = [
       priority: p.priority,
     }),
   ),
+  ...seriesIds.map((id) =>
+    urlEntry(`${site}/series/${id}`, {
+      lastmod: latest,
+      changefreq: 'weekly',
+      priority: '0.65',
+    }),
+  ),
   ...posts.map((e) =>
     urlEntry(`${site}/blog/${e.slug}`, {
       lastmod: e.date,
@@ -62,4 +71,4 @@ const chunks = [
 const body = chunks.join('\n');
 const outPublic = path.join(root, 'public', 'sitemap.xml');
 fs.writeFileSync(outPublic, body);
-console.log('sitemap:', outPublic, 'urls:', staticPaths.length + posts.length);
+console.log('sitemap:', outPublic, 'urls:', staticPaths.length + seriesIds.length + posts.length);

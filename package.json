@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/sync-monetization-assets.mjs && node scripts/generate-sitemap.mjs && astro build",
+    "build": "node scripts/rebuild-posts.mjs && node scripts/sync-monetization-assets.mjs && node scripts/generate-sitemap.mjs && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "draft": "node scripts/generate-draft.mjs",
@@ -16,6 +16,7 @@
     "draft:evening": "./scripts/cron-draft-slot.sh evening",
     "publish": "node scripts/publish-post.mjs",
     "rebuild:posts": "node scripts/rebuild-posts.mjs",
+    "og:generate": "node scripts/rebuild-posts.mjs",
     "pending": "node scripts/publish-post.mjs --list",
     "pending:vault": "node scripts/sync-pending-vault.mjs",
     "joke:add": "node scripts/add-joke.mjs",

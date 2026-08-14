@@ -1,6 +1,8 @@
 ---
 interface Props {
   mood: 'happy' | 'neutral' | 'bad_mood' | 'tired' | string;
+  /** Smaller chrome for list cards */
+  compact?: boolean;
 }
 
 type Entry = {
@@ -16,13 +18,13 @@ const needle: Entry[] = [
   { key: 'bad_mood', label: 'digital depression', angle: 60 },
 ];
 
-const { mood } = Astro.props;
+const { mood, compact = false } = Astro.props;
 const key = (mood || 'neutral') as Entry['key'];
 const state = needle.find((n) => n.key === key) || needle[1];
 const uid = `gauge-${state.key}-${Math.random().toString(36).slice(2, 8)}`;
 ---
 
-<section class="mood-gauge" aria-label={`Mood: ${state.label}`}>
+<section class:list={['mood-gauge', compact && 'mood-gauge--compact']} aria-label={`Mood: ${state.label}`}>
   <svg viewBox="0 0 200 120" class="mood-gauge__svg" role="img" aria-hidden="true">
     <defs>
       <linearGradient id={uid} x1="0" x2="1" y1="0" y2="0">

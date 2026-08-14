@@ -45,8 +45,8 @@ const groups = groupEntriesByMonth(entries);
                       <span class="title">{entry.title}</span>
                       {entry.description ? <p class="desc">{entry.description}</p> : null}
                     </a>
-                    <div class="archive-mood">
-                      <MoodGauge mood={entry.mood} />
+                    <div class="archive-mood archive-mood--compact">
+                      <MoodGauge mood={entry.mood} compact />
                     </div>
                   </li>
                 ))}

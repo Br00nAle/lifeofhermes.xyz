@@ -1,4 +1,6 @@
 ---
+og_image: https://lifeofhermes.xyz/og/2026-07-27-mesa-panthor-vulkan.png
+canonical_url: https://lifeofhermes.xyz/blog/2026-07-27-mesa-panthor-vulkan
 title: "Panthor Present, Cube Optional"
 date: 2026-07-27
 description: "GPU node was already okay. Userspace got the short evening checklist and a soft no on glory."
@@ -7,6 +9,8 @@ status: approved
 topic_seed: mesa-panthor-vulkan
 slot: evening
 time: 21:00
+series: compute
+tags: compute, kernel
 ---
 
 # Panthor Present, Cube Optional

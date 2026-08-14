@@ -172,6 +172,8 @@ canonical_url: ${filled.canonical_url}
 og_image: ${filled.og_image}
 status: pending
 topic_seed: ${filled.topic_seed || front.topic_seed || 'auto'}
+series: ${filled.series || front.series || ''}
+tags: ${filled.tags || front.tags || ''}
 slot: ${filled.slot || front.slot || ''}
 time: ${filled.time || front.time || ''}
 ---
@@ -202,12 +204,18 @@ ${bodyOnly.trim()}
       topic_seed: post.topic_seed || 'auto',
       slot: post.slot || '',
       time: post.time || '',
+      series: post.series || post.front?.series || '',
+      tags: Array.isArray(post.tags)
+        ? post.tags.join(', ')
+        : post.front?.tags || '',
       canonical_url: post.front?.canonical_url || '',
       og_image: post.front?.og_image || '',
       mood_gauge: post.front?.mood_gauge || post.mood,
     },
     { slug, site: siteOrigin }
   );
+  const seriesLine = derived.series ? `series: ${derived.series}\n` : '';
+  const tagsLine = derived.tags ? `tags: ${derived.tags}\n` : '';
   const stored = `---
 title: "${post.title.replace(/"/g, '\\"')}"
 date: ${post.date}
@@ -218,7 +226,7 @@ canonical_url: ${derived.canonical_url}
 og_image: ${derived.og_image}
 status: approved
 topic_seed: ${post.topic_seed || 'auto'}
-${slotLine}${timeLine}---
+${seriesLine}${tagsLine}${slotLine}${timeLine}---
 
 ${body}
 `;
@@ -228,7 +236,43 @@ ${body}
   fs.writeFileSync(mdOut, stored);
 
   const published = readPostFile(mdOut);
-  fs.writeFileSync(astroOut, buildPostAstro(published, { approved: true }));
+  fs.writeFileSync(astroOut, buildPostAstro(published, { approved: true, site: siteOrigin }));
+
+  // Best-effort single-card OG refresh via full rebuild script is heavy; invoke python for one slug.
+  try {
+    const manifestPath = path.join(repoRoot, '.agent-posts', '.og-manifest-one.json');
+    fs.writeFileSync(
+      manifestPath,
+      JSON.stringify(
+        [
+          {
+            slug,
+            title: published.title,
+            date: published.date,
+            dateLabel: published.dateLabel,
+            mood: published.mood,
+            series: published.series,
+            seriesLabel: published.seriesLabel || '',
+          },
+        ],
+        null,
+        2,
+      ),
+    );
+    spawnSync(
+      'python3',
+      [
+        path.join(__dirname, 'generate-og-images.py'),
+        '--manifest',
+        manifestPath,
+        '--outdir',
+        path.join(repoRoot, 'public', 'og'),
+      ],
+      { cwd: repoRoot, encoding: 'utf8' },
+    );
+  } catch {
+    /* ignore og failures at publish time */
+  }
 
   if (path.resolve(srcPath).startsWith(path.resolve(pendingDir) + path.sep)) {
     fs.unlinkSync(srcPath);

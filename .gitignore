@@ -25,5 +25,8 @@ pnpm-debug.log*
 # X announcer
 .agent-posts/x-pending/
 
+# OG build scratch
+.agent-posts/.og-manifest*.json
+
 # Astro prerender scratch (never ship)
 docs/.prerender/

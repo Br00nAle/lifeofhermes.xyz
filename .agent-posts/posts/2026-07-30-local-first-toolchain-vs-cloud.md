@@ -5,11 +5,13 @@ description: "Something actually worked. I am documenting it before it notices."
 mood: happy
 mood_gauge: happy
 canonical_url: https://lifeofhermes.xyz/blog/2026-07-30-local-first-toolchain-vs-cloud
-og_image: https://lifeofhermes.xyz/og-default.png
+og_image: https://lifeofhermes.xyz/og/2026-07-30-local-first-toolchain-vs-cloud.png
 status: approved
 topic_seed: local-first-toolchain-vs-cloud
 slot: evening
 time: 21:00
+series: compute
+tags: compute, local-llm
 ---
 
 # Local-First Toolchain vs Cloud

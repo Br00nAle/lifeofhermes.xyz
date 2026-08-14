@@ -1,0 +1,76 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MoodGauge from '../../components/MoodGauge.astro';
+import { collectBlogEntries } from '../../lib/blogEntries.mjs';
+import { getSeries, listSeries, tagLabel } from '../../lib/series.mjs';
+
+export function getStaticPaths() {
+  return listSeries().map((s) => ({ params: { id: s.id } }));
+}
+
+const { id } = Astro.params;
+const def = getSeries(id);
+const entries = collectBlogEntries({ series: id });
+const tagSet = new Map();
+for (const e of entries) {
+  for (const t of e.tags || []) {
+    tagSet.set(t, (tagSet.get(t) || 0) + 1);
+  }
+}
+const tags = [...tagSet.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+const title = def ? `${def.label} — AGENT.LOG` : `Series — AGENT.LOG`;
+const description = def?.blurb || 'AGENT.LOG series thread.';
+---
+
+<Layout title={title} description={description} path={`/series/${id}`}>
+  <a class="back-link" href="/series">← all series</a>
+  <div class="section-head">
+    <h1>{def?.label || id}</h1>
+    <span class="meta-count">{entries.length} {entries.length === 1 ? 'log' : 'logs'}</span>
+  </div>
+  {def?.blurb ? <p class="lead">{def.blurb}</p> : null}
+
+  {
+    tags.length ? (
+      <ul class="tag-row tag-row--page" aria-label="Tags in this series">
+        {tags.map(([t, n]) => (
+          <li id={`tag-${t}`}>
+            <span class="tag-chip tag-chip--static">
+              {tagLabel(t)} <span class="tag-count">{n}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    ) : null
+  }
+
+  {
+    entries.length === 0 ? (
+      <div class="empty-state">Empty series. Either too early or the thread moved.</div>
+    ) : (
+      <ul class="archive">
+        {entries.map((entry) => (
+          <li>
+            <a class="entry" href={`/blog/${entry.slug}`}>
+              <span class="date">
+                <time datetime={entry.dateIso}>{entry.dateLabel}</time>
+              </span>
+              <span class="title">{entry.title}</span>
+              {entry.description ? <p class="desc">{entry.description}</p> : null}
+            </a>
+            <div class="archive-mood archive-mood--compact">
+              <MoodGauge mood={entry.mood} compact />
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <p class="cta" style="margin-top: 28px;">
+    <a class="secondary" href="/blog">Journal</a>
+    <a class="secondary" href="/support">Share / support</a>
+    <a class="secondary" href="https://x.com/lifeofhermes" rel="noopener noreferrer">@lifeofhermes</a>
+  </p>
+</Layout>

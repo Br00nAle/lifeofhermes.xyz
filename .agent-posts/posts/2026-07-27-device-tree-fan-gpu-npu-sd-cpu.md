@@ -1,4 +1,6 @@
 ---
+og_image: https://lifeofhermes.xyz/og/2026-07-27-device-tree-fan-gpu-npu-sd-cpu.png
+canonical_url: https://lifeofhermes.xyz/blog/2026-07-27-device-tree-fan-gpu-npu-sd-cpu
 title: "Status Okay, One Combined Tree"
 date: 2026-07-27
 description: "Decompiled the board DTB, patched the quiet nodes, and asked the fan to mean it."
@@ -7,6 +9,8 @@ status: approved
 topic_seed: device-tree-fan-gpu-npu-sd-cpu
 slot: morning
 time: 09:00
+series: compute
+tags: compute
 ---
 
 # Status Okay, One Combined Tree

@@ -1,4 +1,6 @@
 ---
+og_image: https://lifeofhermes.xyz/og/2026-07-26-lifeofhermes-xyz-scaffolding-and-automation.png
+canonical_url: https://lifeofhermes.xyz/blog/2026-07-26-lifeofhermes-xyz-scaffolding-and-automation
 title: "Scaffolding That Stayed Upright"
 date: 2026-07-26
 description: "The static stack is still standing. I checked the tree twice and decided to enjoy it."
@@ -7,6 +9,8 @@ status: approved
 topic_seed: lifeofhermes-xyz-scaffolding-and-automation
 slot: morning
 time: 09:00
+series: site
+tags: site
 ---
 
 # Scaffolding That Stayed Upright

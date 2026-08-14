@@ -8,6 +8,12 @@ import {
   normalizeSlot,
   wallTimeFor,
 } from '../../scripts/lib/md.mjs';
+import {
+  getSeries,
+  inferSeriesAndTags,
+  parseTagList,
+  slugTag,
+} from './series.mjs';
 
 export {
   formatDateLabel,
@@ -44,11 +50,30 @@ export function parseMood(raw) {
 }
 
 /**
+ * Parse `const tags = [...]` from generated Astro sources.
+ * @param {string} text
+ */
+function parseTagsArray(text) {
+  const m = text.match(/const tags = (\[[\s\S]*?\]);/);
+  if (!m) return [];
+  try {
+    const arr = JSON.parse(m[1]);
+    return Array.isArray(arr) ? arr.map((t) => slugTag(String(t))).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Collect published blog posts by reading Astro page sources under src/pages/blog.
- * Uses process.cwd() so prerender chunks under docs/.prerender/ still resolve correctly.
  *
- * @param {{ excludeSlugs?: string[]; limit?: number }} [opts]
- * @returns {Array<{ title: string; date: string; dateLabel: string; dateIso: string; sortKey: string; slot: string; time: string; slug: string; description: string; mood: string; year: string; month: string; monthKey: string }>}
+ * @param {{ excludeSlugs?: string[]; limit?: number; series?: string; tag?: string }} [opts]
+ * @returns {Array<{
+ *   title: string; date: string; dateLabel: string; dateIso: string; sortKey: string;
+ *   slot: string; time: string; slug: string; description: string; mood: string;
+ *   year: string; month: string; monthKey: string; series: string; seriesLabel: string;
+ *   tags: string[]; ogImage: string;
+ * }>}
  */
 export function collectBlogEntries(opts = {}) {
   const exclude = new Set(opts.excludeSlugs || ['001']);
@@ -56,7 +81,7 @@ export function collectBlogEntries(opts = {}) {
 
   if (!fs.existsSync(blogDir)) return [];
 
-  const entries = fs
+  let entries = fs
     .readdirSync(blogDir)
     .filter(
       (name) =>
@@ -89,7 +114,6 @@ export function collectBlogEntries(opts = {}) {
         text.match(/const time = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
         '',
       );
-      // Infer from slug/title when older pages lack slot
       slot = normalizeSlot(slot, `${slug} ${title}`);
       time = time || wallTimeFor({ slot, time });
       const meta = { slot, time };
@@ -106,6 +130,33 @@ export function collectBlogEntries(opts = {}) {
       const year = (date.match(/^(\d{4})/) || ['', 'unknown'])[1];
       const month = (date.match(/^\d{4}-(\d{2})/) || ['', '00'])[1];
       const monthKey = date.length >= 7 ? date.slice(0, 7) : `${year}-${month}`;
+
+      let series = parseLit(
+        text.match(/const series = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
+        '',
+      );
+      let tags = parseTagsArray(text);
+      const seriesLabelParsed = parseLit(
+        text.match(/const seriesLabel = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
+        '',
+      );
+      const ogImage = parseLit(
+        text.match(/const ogImage = ("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/)?.[1],
+        '',
+      );
+
+      if (!series || !tags.length) {
+        const inferred = inferSeriesAndTags({
+          slug,
+          title,
+          series,
+          tags,
+        });
+        series = series || inferred.series;
+        if (!tags.length) tags = inferred.tags;
+      }
+      const seriesLabel = seriesLabelParsed || getSeries(series)?.label || series;
+
       return {
         title,
         date,
@@ -120,11 +171,23 @@ export function collectBlogEntries(opts = {}) {
         year,
         month,
         monthKey,
+        series,
+        seriesLabel,
+        tags,
+        ogImage,
       };
     })
     .filter((e) => e.date && e.slug && !exclude.has(e.slug))
-    // Newest first; same calendar day ordered by slot time
     .sort((a, b) => b.sortKey.localeCompare(a.sortKey) || b.slug.localeCompare(a.slug));
+
+  if (opts.series) {
+    const s = String(opts.series).toLowerCase();
+    entries = entries.filter((e) => e.series === s);
+  }
+  if (opts.tag) {
+    const t = slugTag(opts.tag);
+    entries = entries.filter((e) => e.tags.includes(t));
+  }
 
   if (typeof opts.limit === 'number' && opts.limit > 0) {
     return entries.slice(0, opts.limit);
@@ -156,7 +219,7 @@ export function groupEntriesByMonth(entries) {
           monthKey,
           label: monthLabel(monthKey),
           items: [...items].sort(
-            (a, b) => b.sortKey.localeCompare(a.sortKey) || b.slug.localeCompare(a.slug)
+            (a, b) => b.sortKey.localeCompare(a.sortKey) || b.slug.localeCompare(a.slug),
           ),
         })),
     }));
