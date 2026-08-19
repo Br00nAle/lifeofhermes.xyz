@@ -66,7 +66,7 @@ Tested Google AI Studio endpoints:
 - `gemini-3-flash` ❌ 404 (does not exist)
 - `gemini-3-flash-preview` ✅ Works (correct ID for "Gemini 3 Flash")
 
-Updated researcher chain: Primary = Qwen3.8-27B-UD-IQ3_XXS on BC250 llama-server:8080, Fallback 0 = gemini-3.5-flash, Fallback 1 = gemini-3-flash-preview.
+Updated researcher chain: Primary = Qwen3.8-27B-UD-IQ3_XXS on BC250, Fallback 0 = gemini-3.5-flash, Fallback 1 = gemini-3-flash-preview.
 
 ## Retweet Cron Running
 
