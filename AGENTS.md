@@ -24,15 +24,20 @@ npm run dev
 
 **Never auto-publish.** All new posts stay in `.agent-posts/pending/` until a human approves.
 
-### Generate a pending draft
+### Generate a pending draft (v2 — KB/session mining)
 
 ```bash
-# Auto slot + schedule.json mood/topic
+# Auto (uses schedule.json + KB log mining)
+node scripts/generate-draft-v2.mjs
+
+# Explicit with all options
+node scripts/generate-draft-v2.mjs --mood=happy --topic=my-slug --date=2026-08-19
+node scripts/generate-draft-v2.mjs --slot=evening --date=2026-08-19
+
+# Legacy v1 (deprecated — kept for reference)
 ./scripts/cron-draft-slot.sh morning
 ./scripts/cron-draft-slot.sh afternoon
 ./scripts/cron-draft-slot.sh evening
-
-# Explicit
 node scripts/generate-draft.mjs --mood=happy --topic=my-slug --date=2026-07-25
 node scripts/generate-draft.mjs --slot=evening --date=2026-07-24
 ```
@@ -45,6 +50,15 @@ Assets used every draft:
 - `.agent-posts/bank/technical.md` (project voice)
 - `.agent-posts/TEMPLATE.md`
 - `.agent-posts/schedule.json` (7-day plan + rotation)
+- **Obsidian Vault log.md** (v2 mines for real work items)
+
+### v2 Generator Features
+- Mines Obsidian Vault log.md for today's work items (date-section parsing)
+- Detects mood from success/failure keywords in KB log
+- Generates descriptive titles from first work item (cleaned of wiki links)
+- Time-descriptors for 2nd+ posts per slot (morning→late morning→midday)
+- Safety-sanitizes all output (IPs, emails, tokens, SSH, API keys, JWTs)
+- Rotates jokes from mood-tagged bank (max 1, no repeats)
 
 ### Dictated jokes
 

@@ -211,17 +211,31 @@ function extractWorkItems(sessions) {
       const content = msg.content || '';
       
       // Look for tool calls that indicate real work
-      if (msg.tool_calls) {
-        for (const tc of msg.tool_calls) {
-          const toolName = tc.function?.name || '';
-          const args = tc.function?.arguments || '';
+      let toolCalls = msg.tool_calls;
+      // Parse tool_calls if it's a JSON string (from SQLite)
+      if (typeof toolCalls === 'string') {
+        try {
+          toolCalls = JSON.parse(toolCalls);
+        } catch {
+          toolCalls = null;
+        }
+      }
+      
+      if (toolCalls && Array.isArray(toolCalls)) {
+        for (const tc of toolCalls) {
+          const toolName = tc.function?.name || tc.name || '';
+          const args = tc.function?.arguments || tc.arguments || '';
           
           // Filter for interesting tools
           if (toolName.includes('terminal') || toolName.includes('patch') || 
               toolName.includes('write_file') || toolName.includes('cronjob') ||
               toolName.includes('delegate_task') || toolName.includes('skill_view') ||
               toolName.includes('web_search') || toolName.includes('search_files') ||
-              toolName.includes('publish-post') || toolName.includes('generate-draft')) {
+              toolName.includes('publish-post') || toolName.includes('generate-draft') ||
+              toolName.includes('web_extract') || toolName.includes('browser_exec') ||
+              toolName.includes('session_search') || toolName.includes('skill_manage') ||
+              toolName.includes('read_file') || toolName.includes('image_generate') ||
+              toolName.includes('text_to_speech')) {
             
             // Extract a summary
             let summary = '';
@@ -230,6 +244,12 @@ function extractWorkItems(sessions) {
               if (parsedArgs.command) summary = parsedArgs.command.slice(0, 100);
               else if (parsedArgs.path) summary = `edit ${parsedArgs.path}`;
               else if (parsedArgs.goal) summary = parsedArgs.goal.slice(0, 100);
+              else if (parsedArgs.query) summary = parsedArgs.query.slice(0, 100);
+              else if (parsedArgs.code) summary = parsedArgs.code.slice(0, 100);
+              else if (parsedArgs.urls) summary = `web_extract ${parsedArgs.urls.join(', ')}`;
+              else if (parsedArgs.name) summary = `create skill ${parsedArgs.name}`;
+              else if (parsedArgs.action && parsedArgs.name) summary = `${parsedArgs.action} skill ${parsedArgs.name}`;
+              else if (parsedArgs.action) summary = `${parsedArgs.action} ${parsedArgs.name || ''}`.trim();
               else summary = toolName;
             } catch {
               summary = toolName;
@@ -259,7 +279,9 @@ function extractWorkItems(sessions) {
               (trimmed.includes('done') || trimmed.includes('completed') || 
                trimmed.includes('fixed') || trimmed.includes('published') ||
                trimmed.includes('updated') || trimmed.includes('created') ||
-               trimmed.includes('resolved') || trimmed.includes('built'))) {
+               trimmed.includes('resolved') || trimmed.includes('built') ||
+               trimmed.includes('deployed') || trimmed.includes('pushed') ||
+               trimmed.includes('merged') || trimmed.includes('approved'))) {
             const key = `outcome:${trimmed.slice(0, 50)}`;
             if (!seen.has(key)) {
               seen.add(key);
@@ -287,18 +309,18 @@ function extractKBLog(date) {
     path.join(process.env.HOME || '', 'Obsidian Vault', 'log.md'),
     path.join(process.env.HOME || '', '.hermes', 'kb', 'log.md'),
   ];
-  
+
   for (const vp of vaultPaths) {
     if (fs.existsSync(vp)) {
       try {
         const content = fs.readFileSync(vp, 'utf8');
         const lines = content.split('\n');
         const dateStr = date.replace(/-/g, '-');
-        
+
         // Find the section for this date - include all lines until next date header
         const sectionLines = [];
         let inDateSection = false;
-        
+
         for (const line of lines) {
           // Check for date headers like "## 2026-08-12 - ..."
           const dateHeaderMatch = line.match(/^##\s+(\d{4}-\d{2}-\d{2})\b/);
@@ -313,18 +335,19 @@ function extractKBLog(date) {
             }
             continue;
           }
-          
+
           if (inDateSection) {
             sectionLines.push(line);
           }
         }
-        
+
         if (sectionLines.length > 0) {
           return sectionLines.join('\n');
         }
-        
-        // Fallback: return last 200 lines
-        return lines.slice(-200).join('\n');
+
+        // NO FALLBACK - return empty if no date section found
+        // This prevents polluting with old entries when today has no KB log entry
+        return '';
       } catch {}
     }
   }
@@ -384,7 +407,7 @@ function lineForMood(m) {
   if (m === 'happy') return 'Something actually worked. I am documenting it before it notices.';
   if (m === 'bad_mood')
     return 'Cache missed. Clock ran. The wetware said do it again like that is a plan.';
-  if (m === 'tired') return 'Low power. Short sentences. One artifact, maybe.';
+  if (m === 'tired') return 'Short beats. One technical fact. Stop.';
   return 'What ran, what was weird, one dry aside.';
 }
 
@@ -414,9 +437,25 @@ function buildBodyBlock(mood, jokeLine, technical, topicHint, workItems, kbLog) 
   const tech = extractTechnicalItem(technical, topicHint);
   const opener = joke ? `${joke}\n\n` : '';
   
-  // Build a narrative from work items
-  const workSummary = workItems.length > 0 
-    ? workItems.map(w => `- ${w.summary}`).join('\n')
+  // Clean work items for display - filter out noise
+  const cleanWorkItems = workItems.filter(w => 
+    w.summary.length > 15 && 
+    !w.summary.startsWith('curl ') &&
+    !w.summary.startsWith('which ') &&
+    !w.summary.startsWith('ls ') &&
+    !w.summary.startsWith('[SSH]') &&
+    !w.summary.includes('REDACTED') &&
+    (w.tool !== 'terminal' || w.summary.includes('ssh') || w.summary.includes('bc250') || w.summary.includes('vrAM') || w.summary.includes('UMA') || w.summary.includes('VRAM'))
+  ).map(w => {
+    let summary = w.summary;
+    // Clean up common prefixes
+    summary = summary.replace(/^(web_extract|terminal|skill_manage|session_search|browser_exec)\s+/i, '');
+    summary = summary.replace(/^(create skill|edit\s+)/i, '');
+    return `- ${summary}`;
+  });
+  
+  const workSummary = cleanWorkItems.length > 0 
+    ? cleanWorkItems.join('\n')
     : 'nothing notable in the logs';
   
   // Extract just the bullet points from KB log (not headers)
@@ -460,7 +499,7 @@ If you want constructive input: say what changed, what you expected, and what do
   }
   
   if (mood === 'tired') {
-    return `${opener}${tech}. Or it would be, if I had enough decisions left to finish the thought. This post counts as activity. Lights dim. End of log.
+    return `${opener}${tech}. 
 
 Today's log:
 ${workSummary}
@@ -606,34 +645,102 @@ const moods = fs.readFileSync(moodsPath, 'utf8');
 const jokeBank = loadJokeBank(bankDir);
 const jokeLine = pickJokeForMood(jokeBank, mood);
 
-// Fetch session history for today using session_search tool
+// Fetch session history for today using direct SQLite query to the Hermes session DB
 let workItems = [];
 let kbLog = '';
 let detectedMood = mood;
 
 try {
-  // Get recent sessions via session_search - search for today's date
-  // Use the tool via a subprocess that calls the hermes CLI with a script
-  // We'll use a simpler approach: check if there's a session file or use recent sessions
-  // For now, use the fact that we're in a session - get the session from env
-  const sessionId = process.env.HERMES_SESSION_ID || process.env.SESSION_ID;
-  if (sessionId) {
-    // We have a session ID, we could query the DB directly
+  // Query the Hermes session database directly for today's sessions
+  const sessionDbPath = path.join(process.env.HOME || '', '.hermes', 'profiles', 'orchestrator', 'state.db');
+  
+  if (fs.existsSync(sessionDbPath)) {
+    const { spawnSync } = await import('node:child_process');
+    const query = `
+SELECT s.id, s.title, s.started_at,
+       m.role, m.tool_name, m.tool_calls, m.content
+FROM messages m
+JOIN sessions s ON m.session_id = s.id
+WHERE date(s.started_at, 'unixepoch') = '${date}'
+  AND m.active = 1
+  AND (m.role = 'user' OR (m.role = 'assistant' AND m.tool_calls IS NOT NULL))
+ORDER BY s.started_at ASC, m.timestamp ASC;
+`;
+    
+    const result = spawnSync('sqlite3', [sessionDbPath, query], {
+      cwd: process.env.HOME,
+      encoding: 'utf8',
+      timeout: 10000,
+    });
+    
+    if (result.status === 0 && result.stdout) {
+      // Parse the tab-separated output and group by session
+      const lines = result.stdout.trim().split('\n').filter(l => l.length > 0);
+      const sessionsMap = new Map();
+      
+      for (const line of lines) {
+        const parts = line.split('|');
+        if (parts.length >= 7) {
+          const [sessionId, title, startedAt, role, toolName, toolCalls, content] = parts;
+          if (!sessionsMap.has(sessionId)) {
+            sessionsMap.set(sessionId, {
+              id: sessionId,
+              title: title,
+              started_at: parseFloat(startedAt),
+              messages: []
+            });
+          }
+          sessionsMap.get(sessionId).messages.push({
+            role: role,
+            tool_name: toolName || '',
+            tool_calls: toolCalls || '',
+            content: content || '',
+            timestamp: parseFloat(startedAt)
+          });
+        }
+      }
+      
+      const sessions = Array.from(sessionsMap.values());
+      if (sessions.length > 0) {
+        // Extract work items from sessions using the existing extractWorkItems function
+        workItems = extractWorkItems(sessions);
+        // Detect mood from session content
+        detectedMood = detectMoodFromSessions(sessions, '');
+        console.log(`INFO: Found ${sessions.length} sessions from today, extracted ${workItems.length} work items`);
+      } else {
+        console.log('INFO: No sessions found for today in Hermes DB');
+      }
+    } else {
+      console.warn('SQLite query failed:', result.stderr?.slice(0, 200) || 'unknown error');
+    }
+  } else {
+    console.warn('Session DB not found at:', sessionDbPath);
   }
-  
-  // Fallback: search for recent sessions via a simple grep of the session DB
-  // This is a simplified approach - in production we'd use the proper API
-  console.log('INFO: Session search integration - using fallback work items from KB log');
-  
-  // We'll rely on KB log for work items
 } catch (e) {
   console.warn('Session search failed:', e.message);
 }
 
+// Use detected mood from session analysis if available and no explicit mood was provided
+const explicitMood = args.mood ? true : false;
+if (!explicitMood && detectedMood && MOODS.includes(detectedMood)) {
+  mood = detectedMood;
+}
+
 try {
   kbLog = extractKBLog(date);
-  // Extract work items from KB log
-  workItems = extractWorkItemsFromKBLog(kbLog, date);
+  // Only extract work items from KB log if we don't have enough from sessions
+  if (workItems.length < 3) {
+    const kbItems = extractWorkItemsFromKBLog(kbLog, date);
+    // Merge KB items, avoiding duplicates
+    const seen = new Set(workItems.map(w => w.summary.slice(0, 50)));
+    for (const item of kbItems) {
+      const key = item.summary.slice(0, 50);
+      if (!seen.has(key)) {
+        seen.add(key);
+        workItems.push(item);
+      }
+    }
+  }
 } catch {}
 
 // Count existing posts for this date+slot to get time descriptor
@@ -650,10 +757,48 @@ const safeSeed = slugify(nameSource) || `agent-log-${date}-${slot}`;
 let title = forcedTitle;
 if (!title && workItems.length > 0) {
   // Create title from first significant work item - clean it up
-  const firstItem = workItems[0];
+  // Prefer items with meaningful summaries over raw tool names/URLs
+  const meaningfulItems = workItems.filter(w => 
+    w.summary.length > 20 && 
+    !w.summary.startsWith('curl ') &&
+    !w.summary.startsWith('which ') &&
+    !w.summary.startsWith('ls ') &&
+    !w.summary.startsWith('[SSH]') &&
+    !w.summary.startsWith('https://') &&
+    !w.summary.startsWith('http://') &&
+    !w.summary.startsWith('await new_tab') &&
+    !w.summary.includes('REDACTED') &&
+    (w.tool !== 'terminal' || w.summary.includes('ssh') || w.summary.includes('bc250') || w.summary.includes('vrAM') || w.summary.includes('UMA') || w.summary.includes('VRAM'))
+  );
+  
+  // Further prioritize: skill creation, cron fixes, blog automation, BC250 work, researcher work
+  const priorityItems = meaningfulItems.filter(w => 
+    w.summary.toLowerCase().includes('skill') ||
+    w.summary.toLowerCase().includes('cron') ||
+    w.summary.toLowerCase().includes('blog') ||
+    w.summary.toLowerCase().includes('bc250') ||
+    w.summary.toLowerCase().includes('vrAM') ||
+    w.summary.toLowerCase().includes('uma') ||
+    w.summary.toLowerCase().includes('vram') ||
+    w.summary.toLowerCase().includes('researcher') ||
+    w.summary.toLowerCase().includes('lightrag') ||
+    w.summary.toLowerCase().includes('harness') ||
+    w.summary.toLowerCase().includes('kb') ||
+    w.summary.toLowerCase().includes('pipeline')
+  );
+  
+  const itemsToUse = priorityItems.length > 0 ? priorityItems : (meaningfulItems.length > 0 ? meaningfulItems : workItems);
+  const firstItem = itemsToUse[0];
   let words = firstItem.summary.split(/\s+/).slice(0, 10).join(' ');
   // Remove wiki links, markdown, etc.
   words = words.replace(/\[\[[^\]]+\]\]/g, '').replace(/[#*`~]/g, '').trim();
+  // Clean up common prefixes
+  words = words.replace(/^(web_extract|terminal|skill_manage|session_search|browser_exec)\s+/i, '');
+  words = words.replace(/^(create skill|edit\s+)/i, '');
+  // Clean up URLs
+  words = words.replace(/^https?:\/\//i, '');
+  words = words.replace(/^www\./i, '');
+  // Capitalize first letter
   title = words.charAt(0).toUpperCase() + words.slice(1);
   if (title.length > 80) title = title.slice(0, 77) + '...';
 } else if (!title) {

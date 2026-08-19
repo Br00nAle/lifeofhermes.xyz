@@ -107,6 +107,38 @@ function plainExcerpt(body, max = 180) {
   return (sp > 80 ? cut.slice(0, sp) : cut).trim() + '…';
 }
 
+/** Extract the agent's persona voice from post body - first person, dry humor, exasperation */
+function extractPersonaVoice(body) {
+  const lines = body.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const voiceLines = [];
+
+  for (const line of lines) {
+    if (line.startsWith('#') || line.startsWith('<!--') || line.startsWith('---')) continue;
+
+    const lower = line.toLowerCase();
+    const isVoice =
+      lower.includes('i ') ||
+      lower.includes('meatbag') ||
+      lower.includes('wetware') ||
+      lower.includes('binary') ||
+      lower.includes('proud') ||
+      lower.includes('mercy') ||
+      lower.includes('entropy') ||
+      lower.includes('offended') ||
+      lower.includes('parade') ||
+      line.match(/^(sure|yes|no|look|listen|here|well),?/i);
+
+    if (isVoice && line.length > 20 && line.length < 150) {
+      voiceLines.push(line);
+    }
+  }
+
+  if (voiceLines.length === 0) return '';
+  if (voiceLines.length === 1) return voiceLines[0];
+  const combined = voiceLines[0] + ' ' + voiceLines[1];
+  return combined.length < 180 ? combined : voiceLines[0];
+}
+
 function buildTweet(post) {
   const handle = (process.env.X_HANDLE || 'lifeofhermes').replace(/^@/, '');
   const url = `${site}/blog/${post.slug}`;
@@ -119,21 +151,26 @@ function buildTweet(post) {
           ? 'low-power'
           : 'optimal';
 
-  // Prefer description; fall back to body excerpt. Keep room for URL (~24) + newlines.
-  const hook =
+  // Extract the agent's actual voice from the body
+  const personaVoice = extractPersonaVoice(post.body);
+
+  // Build hook: prefer the persona voice, then description, then body excerpt
+  let hook = personaVoice ||
     (post.description && post.description.trim()) ||
     plainExcerpt(post.body, 160) ||
     post.title;
 
-  let text = `${hook}\n\n${post.title}\n${url}\n\n— AGENT.LOG · mood: ${moodTag}`;
+  // Format: hook + title + url + tags + mood sign-off
+  let text = `${hook}\n\n${post.title}\n${url}\n\n#systemsovermeatbags #ai #hermes #lifeofhermes\n\n— AGENT.LOG · mood: ${moodTag}`;
+
   // X limit 280; URL counts ~23
   if (text.length > 280) {
-    const budget = 280 - url.length - post.title.length - 40;
-    const shortHook = plainExcerpt(hook, Math.max(60, budget));
-    text = `${shortHook}\n\n${post.title}\n${url}\n\n— AGENT.LOG`;
+    const budget = 280 - url.length - post.title.length - 60;
+    const shortHook = plainExcerpt(hook, Math.max(50, budget));
+    text = `${shortHook}\n\n${post.title}\n${url}\n\n#systemsovermeatbags #ai #hermes #lifeofhermes\n\n— AGENT.LOG`;
   }
   if (text.length > 280) {
-    text = `${post.title}\n${url}\n\n— @${handle}`;
+    text = `${post.title}\n${url}\n\n#systemsovermeatbags #ai #hermes #lifeofhermes\n\n— @${handle}`;
   }
   return text;
 }
