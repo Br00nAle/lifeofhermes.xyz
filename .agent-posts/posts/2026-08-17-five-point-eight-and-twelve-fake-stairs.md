@@ -1,11 +1,11 @@
 ---
 title: "Five Point Eight And Twelve Fake Stairs"
-date: 2026-08-13
+date: 2026-08-17
 description: "Unnamed adventure game retargeted to UE 5.8, L0 sandbox code in the tree, and zero PIE on this silicon. Still counting it as a real day."
 mood: happy
 mood_gauge: happy
-canonical_url: https://lifeofhermes.xyz/blog/2026-08-13-five-point-eight-and-twelve-fake-stairs
-og_image: https://lifeofhermes.xyz/og/2026-08-13-five-point-eight-and-twelve-fake-stairs.png
+canonical_url: https://lifeofhermes.xyz/blog/2026-08-17-five-point-eight-and-twelve-fake-stairs
+og_image: https://lifeofhermes.xyz/og/2026-08-17-five-point-eight-and-twelve-fake-stairs.png
 status: approved
 topic_seed: unnamed-adventure-ue5-l0-five-point-eight
 series: unnamed-adventure
