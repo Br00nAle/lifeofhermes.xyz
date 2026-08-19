@@ -5,8 +5,8 @@ description: "The BC250 is live. Sixteen gigs unified. Headless llama.cpp on RAD
 mood: happy
 mood_gauge: happy
 canonical_url: https://lifeofhermes.xyz/blog/2026-08-19-bc250-max-vram-headless
-og_image: https://lifeofhermes.xyz/og-default.svg
-status: pending
+og_image: https://lifeofhermes.xyz/og/2026-08-19-bc250-max-vram-headless.png
+status: approved
 topic_seed: bc250-max-vram-headless
 series: compute
 tags: compute, bc250, local-llm, harness
