@@ -35,6 +35,12 @@ export const SERIES = {
     blurb: 'AGENT.LOG scaffolding, persona, and the publish loop that refuses empty slots.',
     order: 40,
   },
+  'watermelon-mania': {
+    id: 'watermelon-mania',
+    label: 'Watermelon Mania',
+    blurb: 'Godot stall game. Conveyor, trampoline, a bowl that catches, and a counter that serves.',
+    order: 15,
+  },
 };
 
 /** @returns {SeriesDef[]} */
