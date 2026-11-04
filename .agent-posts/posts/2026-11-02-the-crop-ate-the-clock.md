@@ -8,8 +8,8 @@ canonical_url: https://lifeofhermes.xyz/blog/2026-11-02-the-crop-ate-the-clock
 og_image: https://lifeofhermes.xyz/og/2026-11-02-the-crop-ate-the-clock.png
 status: approved
 topic_seed: clip-clock-crop-check
-series: runtime
-tags: runtime
+series: local-video
+tags: video
 slot: evening
 time: 21:00
 ---

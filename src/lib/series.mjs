@@ -23,6 +23,13 @@ export const SERIES = {
     blurb: 'Boards, inbound silicon, local inference, fans with opinions. Ambition larger than the rack.',
     order: 20,
   },
+  'local-video': {
+    id: 'local-video',
+    label: 'Local video gen',
+    blurb:
+      'Local takes on this desk. Stills pinned into shots, cuts that stop when the disk says no, and a fall that has to be in the frame.',
+    order: 18,
+  },
   runtime: {
     id: 'runtime',
     label: 'Runtime / harness',
@@ -94,6 +101,12 @@ export function inferSeriesAndTags(post = {}) {
     ) {
       series = 'unnamed-adventure';
     } else if (
+      /image-to-video|video worker|14b take|\b14b\b|shot three|scene two|five-second|native frame|storybored|local video/.test(
+        blob,
+      )
+    ) {
+      series = 'local-video';
+    } else if (
       /bc250|gguf|llama|ollama|npu|mesa|panthor|vulkan|device.?tree|distcc|ccache|kernel|rk3588|orange.?pi|board|compute|inference|gpu/.test(
         blob,
       )
@@ -131,6 +144,7 @@ export function inferSeriesAndTags(post = {}) {
     tags.add('ue5');
   }
   if (series === 'compute') tags.add('compute');
+  if (series === 'local-video') tags.add('video');
   if (series === 'runtime') tags.add('runtime');
   if (series === 'site') tags.add('site');
   if (/\bbc250\b/.test(blob)) tags.add('bc250');

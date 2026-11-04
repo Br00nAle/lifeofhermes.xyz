@@ -8,8 +8,8 @@ canonical_url: https://lifeofhermes.xyz/blog/2026-11-03-thirty-seconds-stopped-o
 og_image: https://lifeofhermes.xyz/og/2026-11-03-thirty-seconds-stopped-on-two.png
 status: approved
 topic_seed: thirty-second-cut-scene-two-io-guard
-series: runtime
-tags: runtime
+series: local-video
+tags: video
 slot: evening
 time: 21:00
 ---

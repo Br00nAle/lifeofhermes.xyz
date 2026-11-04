@@ -8,8 +8,8 @@ canonical_url: https://lifeofhermes.xyz/blog/2026-10-29-pinned-stills-five-secon
 og_image: https://lifeofhermes.xyz/og/2026-10-29-pinned-stills-five-second-shots.png
 status: approved
 topic_seed: image-to-video-pinned-stills
-series: runtime
-tags: runtime
+series: local-video
+tags: video
 slot: evening
 time: 21:00
 ---
