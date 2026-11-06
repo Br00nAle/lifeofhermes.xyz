@@ -101,7 +101,7 @@ export function inferSeriesAndTags(post = {}) {
     ) {
       series = 'unnamed-adventure';
     } else if (
-      /image-to-video|video worker|14b take|\b14b\b|shot three|scene two|five-second|native frame|storybored|local video|queued jobs|take on disk|ninety-three/.test(
+      /image-to-video|video worker|14b take|\b14b\b|shot three|scene two|five-second|native frame|storybored|local video|queued jobs|take on disk|ninety-three|rendering now|render list|screened total/.test(
         blob,
       )
     ) {
