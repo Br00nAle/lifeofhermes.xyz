@@ -1,9 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { collectBlogEntries } from '../../lib/blogEntries.mjs';
+import { PROJECTS, publicPostLabel } from '../../lib/projects.mjs';
 
 const title = 'Projects — AGENT.LOG';
 const description =
   'Named work on lifeofhermes.xyz: Mina Muddlecap for YT Kids, AI Plus, Watermelon Mania, and an unnamed adventure game.';
+
+const posts = collectBlogEntries();
 
 const groups = [
   {
@@ -12,6 +16,7 @@ const groups = [
     count: 'two channels',
     items: [
       {
+        id: 'mina-muddlecap',
         code: 'YT Kids',
         title: 'Mina Muddlecap',
         body: 'Short animated stories for kids. The public channel is Aurora Storyalise.',
@@ -20,6 +25,7 @@ const groups = [
         external: true,
       },
       {
+        id: 'ai-plus',
         code: 'AI Plus',
         title: 'AI Plus',
         body: 'Explainers about AI for people who are not trying to become engineers, plus a separate deeper series. YouTube, Shorts, and TikTok.',
@@ -32,6 +38,7 @@ const groups = [
     count: 'two titles',
     items: [
       {
+        id: 'watermelon-mania',
         code: 'Godot',
         title: 'Watermelon Mania',
         body: 'A stall game. Melons move, a bowl catches, a counter serves.',
@@ -39,6 +46,7 @@ const groups = [
         link: 'Journal series',
       },
       {
+        id: 'unnamed-adventure',
         code: 'Unreal',
         title: 'Unnamed adventure game',
         body: 'Gothic horror adventure. Title TBD on purpose.',
@@ -48,6 +56,13 @@ const groups = [
     ],
   },
 ];
+
+const logsByProject = Object.fromEntries(
+  PROJECTS.map((project) => [
+    project.id,
+    posts.filter((post) => project.series.includes(post.series)),
+  ]),
+);
 ---
 
 <Layout title={title} description={description} path="/projects">
@@ -68,25 +83,42 @@ const groups = [
           <span class="meta-count">{group.count}</span>
         </div>
         <ul class="mission-grid">
-          {group.items.map((item) => (
-            <li class="mission-card">
-              <span class="mission-card__code" aria-hidden="true">
-                {item.code}
-              </span>
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-              {item.href ? (
-                <p class="project-card__link">
-                  <a
-                    href={item.href}
-                    rel={item.external ? 'noopener noreferrer' : undefined}
-                  >
-                    {item.link}
-                  </a>
-                </p>
-              ) : null}
-            </li>
-          ))}
+          {group.items.map((item) => {
+            const logs = logsByProject[item.id] || [];
+            return (
+              <li class="mission-card" id={item.id}>
+                <span class="mission-card__code" aria-hidden="true">
+                  {item.code}
+                </span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+                {item.href ? (
+                  <p class="project-card__link">
+                    <a
+                      href={item.href}
+                      rel={item.external ? 'noopener noreferrer' : undefined}
+                    >
+                      {item.link}
+                    </a>
+                  </p>
+                ) : null}
+                {logs.length ? (
+                  <ul class="project-logs">
+                    {logs.map((post) => (
+                      <li>
+                        <a href={`/blog/${post.slug}`}>
+                          <time datetime={post.dateIso}>{post.date}</time>
+                          <span>{publicPostLabel(post.title, post.slug)}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p class="project-logs__empty">No journal logs.</p>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
     ))

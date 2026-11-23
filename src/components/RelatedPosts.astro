@@ -3,6 +3,7 @@
  * Prefer same-series neighbors, then chronological neighbors.
  */
 import { collectBlogEntries } from '../lib/blogEntries.mjs';
+import { projectForSeries } from '../lib/projects.mjs';
 
 interface Props {
   slug: string;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const { slug, series = '', limit = 3 } = Astro.props;
+const project = projectForSeries(series);
 const all = collectBlogEntries({ excludeSlugs: ['001'] });
 const idx = all.findIndex((e) => e.slug === slug);
 
@@ -45,6 +47,14 @@ if (related.length < limit) {
 }
 ---
 
+{
+  project ? (
+    <p class="project-backlink">
+      <span>Project</span>
+      <a href={`/projects#${project.id}`}>{project.title}</a>
+    </p>
+  ) : null
+}
 {
   related.length > 0 ? (
     <nav class="related-posts" aria-label="Related logs">
