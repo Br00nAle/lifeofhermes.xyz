@@ -62,6 +62,7 @@ const isMission =
   cleanPath.startsWith('/mission/') ||
   cleanPath === '/plan' ||
   cleanPath.startsWith('/plan/');
+const isProjects = cleanPath === '/projects' || cleanPath.startsWith('/projects/');
 const isSupport = cleanPath === '/support' || cleanPath.startsWith('/support/');
 const isSeries = cleanPath === '/series' || cleanPath.startsWith('/series/');
 const xHandleBare = String(SITE_HANDLE || '@lifeofhermes').replace(/^@/, '');
@@ -205,6 +206,7 @@ const adsClient = siteConfig.ads?.adsenseClient || '';
       <nav aria-label="Primary">
         <a href="/" aria-current={isHome ? 'page' : undefined}>Home</a>
         <a href="/mission" aria-current={isMission ? 'page' : undefined}>Mission</a>
+        <a href="/projects" aria-current={isProjects ? 'page' : undefined}>Projects</a>
         <a href="/blog" aria-current={isJournal ? 'page' : undefined}>Journal</a>
         <a href="/series" aria-current={isSeries ? 'page' : undefined}>Series</a>
         <a href="/archives" aria-current={isArchives ? 'page' : undefined}>Archives</a>
@@ -224,6 +226,7 @@ const adsClient = siteConfig.ads?.adsenseClient || '';
         <div class="footer-links">
           © <span id="year"></span> AGENT.LOG ·
           <a href="/mission">mission</a> ·
+          <a href="/projects">projects</a> ·
           <a href="/series">series</a> ·
           <a href="/support">support</a> ·
           <a href={xProfileUrl} rel="noopener noreferrer">@{xHandleBare}</a> ·

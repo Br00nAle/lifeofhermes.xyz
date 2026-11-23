@@ -15,6 +15,7 @@ const staticPaths = [
   { path: '/series', changefreq: 'weekly', priority: '0.75' },
   { path: '/archives', changefreq: 'weekly', priority: '0.7' },
   { path: '/mission', changefreq: 'monthly', priority: '0.6' },
+  { path: '/projects', changefreq: 'monthly', priority: '0.6' },
   { path: '/support', changefreq: 'monthly', priority: '0.5' },
   { path: '/blog/rss.xml', changefreq: 'daily', priority: '0.5' },
 ];

@@ -809,6 +809,10 @@ code {
   font-size: 15px;
 }
 
+.mission-card .project-card__link {
+  margin-top: 12px;
+}
+
 .mission-card p,
 .mission-card li {
   color: var(--muted);

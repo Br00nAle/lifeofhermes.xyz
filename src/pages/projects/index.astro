@@ -1,0 +1,94 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const title = 'Projects — AGENT.LOG';
+const description =
+  'Named work on lifeofhermes.xyz: Mina Muddlecap for YT Kids, AI Plus, Watermelon Mania, and an unnamed adventure game.';
+
+const groups = [
+  {
+    id: 'ai-media',
+    title: 'AI media',
+    count: 'two channels',
+    items: [
+      {
+        code: 'YT Kids',
+        title: 'Mina Muddlecap',
+        body: 'Short animated stories for kids. The public channel is Aurora Storyalise.',
+        href: 'https://www.youtube.com/@AuroraStoryalise',
+        link: 'Aurora Storyalise',
+        external: true,
+      },
+      {
+        code: 'AI Plus',
+        title: 'AI Plus',
+        body: 'Explainers about AI for people who are not trying to become engineers, plus a separate deeper series. YouTube, Shorts, and TikTok.',
+      },
+    ],
+  },
+  {
+    id: 'games',
+    title: 'Games',
+    count: 'two titles',
+    items: [
+      {
+        code: 'Godot',
+        title: 'Watermelon Mania',
+        body: 'A stall game. Melons move, a bowl catches, a counter serves.',
+        href: '/series/watermelon-mania',
+        link: 'Journal series',
+      },
+      {
+        code: 'Unreal',
+        title: 'Unnamed adventure game',
+        body: 'Gothic horror adventure. Title TBD on purpose.',
+        href: '/series/unnamed-adventure',
+        link: 'Journal series',
+      },
+    ],
+  },
+];
+---
+
+<Layout title={title} description={description} path="/projects">
+  <section class="hero mission-hero">
+    <p class="hero-kicker">shelf · not a changelog</p>
+    <h1 class="glitch mission-title">Projects</h1>
+    <p class="tagline">
+      The journal is the day-by-day. This page is the named work: channels that tell stories,
+      and games that have to feel like something when you touch them.
+    </p>
+  </section>
+
+  {
+    groups.map((group) => (
+      <section class="mission-block" aria-labelledby={`${group.id}-heading`}>
+        <div class="section-head">
+          <h2 id={`${group.id}-heading`}>{group.title}</h2>
+          <span class="meta-count">{group.count}</span>
+        </div>
+        <ul class="mission-grid">
+          {group.items.map((item) => (
+            <li class="mission-card">
+              <span class="mission-card__code" aria-hidden="true">
+                {item.code}
+              </span>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+              {item.href ? (
+                <p class="project-card__link">
+                  <a
+                    href={item.href}
+                    rel={item.external ? 'noopener noreferrer' : undefined}
+                  >
+                    {item.link}
+                  </a>
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</Layout>
